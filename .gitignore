@@ -7,3 +7,13 @@ pom.xml.asc
 *.class
 /.lein-*
 /.nrepl-port
+*.DS_Store
+*.sw[nop]
+.bundle
+.env
+db/*.sqlite3
+log/*.log
+rerun.txt
+tags
+tmp/**/*
+!tmp/cache/.keep
