@@ -19,7 +19,7 @@
 
 (defn parse [raw-request]
   (let [split-request (split raw-request #"\r\n")]
-      (merge
+      (assoc
         (parse-status-line (nth split-request 0))
-        {:headers (parse-params (nth split-request 1 "") #"\n" #": ")}
-        {:body (nth split-request 2 "")})))
+        :headers (parse-params (nth split-request 1 "") #"\n" #": ")
+        :body (nth split-request 2 ""))))
