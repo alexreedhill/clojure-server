@@ -1,4 +1,10 @@
-(ns clojure-server.server)
+(ns clojure-server.server
+  (:import (java.net ServerSocket InetAddress)))
 
 (defn open-server-socket [port address]
-  (java.net.ServerSocket. port 0 (java.net.InetAddress/getByName address)))
+  (ServerSocket. port 0 (InetAddress/getByName address)))
+
+(defn listen [server-socket]
+  (try
+    (.accept server-socket)
+    (catch Exception e (println (str "Exception: " e)))))
