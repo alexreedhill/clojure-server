@@ -1,5 +1,6 @@
 (ns clojure-server.request-parser
-  (:require [clojure.string :refer [split]]))
+  (:require [clojure.string :refer [split]])
+  (:require [clojure-server.parameter-decoder :refer [decode]]))
 
 (defn parse-params [params outer-delimiter inner-delimiter]
   (reduce
@@ -13,7 +14,7 @@
   (let [split-status-line (split raw-status-line #" ")]
     {:method (split-status-line 0)
      :path (split-status-line 1)
-     :query-params (parse-params (nth (split (split-status-line 1) #"\?") 1 "") #"&" #"=")
+     :query-params (parse-params (decode (nth (split (split-status-line 1) #"\?") 1 "")) #"&" #"=")
      :http-version (split-status-line 2)}))
 
 (defn parse [raw-request]

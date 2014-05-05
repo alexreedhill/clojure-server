@@ -22,4 +22,7 @@
       (should= {"Foo" "Bar", "Boo" "Far"} ((parse "GET / HTTP/1.1\r\nFoo: Bar\nBoo: Far") :headers)))
 
   (it "parses body"
-      (should= "Body" ((parse "GET / HTTP/1.1\r\nHeaders\r\nBody") :body))))
+      (should= "Body" ((parse "GET / HTTP/1.1\r\nHeaders\r\nBody") :body)))
+
+  (it "decodes query string parameters with parameter decoder"
+      (should= {"foo" "bar"} ((parse "GET /?foo%3Dbar HTTP/1.1") :query-params))))
