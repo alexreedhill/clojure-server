@@ -1,5 +1,5 @@
-(ns clojure-server.request-spec
-  (:require [clojure-server.request :refer :all])
+( ns clojure-server.request-parser-spec
+  (:require [clojure-server.request-parser :refer :all])
   (:require [speclj.core :refer :all]))
 
 (describe "request"
@@ -13,7 +13,7 @@
       (should= "HTTP/1.1" ((parse "GET / HTTP/1.1") :http-version)))
 
   (it "parses query string parameters"
-      (should= {"foo" "bar"} ((parse "GET /?foo=bar HTTP/1.1") :params)))
+      (should= {"foo" "bar"} ((parse "GET /?foo=bar HTTP/1.1") :query-params)))
 
   (it "parses a single header"
       (should= {"Foo" "Bar"} ((parse "GET / HTTP/1.1\r\nFoo: Bar") :headers)))

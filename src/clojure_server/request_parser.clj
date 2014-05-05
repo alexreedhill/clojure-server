@@ -1,20 +1,19 @@
-(ns clojure-server.request)
-(use '[clojure.string :only (split)])
+(ns clojure-server.request-parser
+  (:require [clojure.string :refer [split]]))
 
 (defn parse-params [params outer-delimiter inner-delimiter]
-  (loop [acc          {}
-         split-params (split params outer-delimiter)]
-    (if (= (count split-params) 0)
-      acc
-      (let [split-param (split (first split-params) inner-delimiter)]
-        (recur (merge acc {(first split-param) (second split-param)})
-               (rest split-params))))))
+  (reduce
+    (fn [acc param]
+      (let [[k v] (split param inner-delimiter)]
+        (assoc acc k v)))
+    {}
+    (split params outer-delimiter)))
 
 (defn parse-status-line [raw-status-line]
   (let [split-status-line (split raw-status-line #" ")]
     {:method (split-status-line 0)
      :path (split-status-line 1)
-     :params (parse-params (nth (split (split-status-line 1) #"\?") 1 "") #"&" #"=")
+     :query-params (parse-params (nth (split (split-status-line 1) #"\?") 1 "") #"&" #"=")
      :http-version (split-status-line 2)}))
 
 (defn parse [raw-request]
