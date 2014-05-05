@@ -29,8 +29,9 @@
          input params]
     (if (= (count input) 0)
       (apply str output)
-      (recur
-        (conj
-          (into output (take-while #(not= \% %) input))
-          (conversions (apply str (take 3 (drop-while #(not= \% %) input)))))
-        (drop 3 (drop-while #(not= \% %) input))))))
+      (let [split-with-& (split-with #(not= \% %) input)]
+        (recur
+            (conj
+              (into output (first split-with-&))
+              (conversions (apply str (take 3 (second split-with-&)))))
+            (drop 3 (second split-with-&)))))))
