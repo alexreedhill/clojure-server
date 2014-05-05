@@ -14,7 +14,7 @@
   (let [split-status-line (split raw-status-line #" ")]
     {:method (split-status-line 0)
      :path (split-status-line 1)
-     :query-params (parse-params (decode (nth (split (split-status-line 1) #"\?") 1 "")) #"&" #"=")
+     :query-params (parse-params (decode (second (split (split-status-line 1) #"\?"))) #"&" #"=")
      :http-version (split-status-line 2)}))
 
 (defn parse [raw-request]
