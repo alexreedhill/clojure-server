@@ -11,15 +11,15 @@
     (split params outer-delimiter)))
 
 (defn parse-status-line [raw-status-line]
-  (let [split-status-line (split raw-status-line #" ")]
-    {:method (split-status-line 0)
-     :path (split-status-line 1)
-     :query-params (parse-params (decode (second (split (split-status-line 1) #"\?"))) #"&" #"=")
-     :http-version (split-status-line 2)}))
+  (let [[method url version] (split raw-status-line #" ")]
+    {:method method
+     :path (first (split url #"\?"))
+     :query-params (parse-params (decode (second (split url #"\?"))) #"&" #"=")
+     :http-version version}))
 
 (defn parse [raw-request]
   (let [split-request (split raw-request #"\r\n")]
-      (assoc
-        (parse-status-line (nth split-request 0))
-        :headers (parse-params (nth split-request 1 "") #"\n" #": ")
-        :body (nth split-request 2 ""))))
+    (assoc
+      (parse-status-line (nth split-request 0))
+      :headers (parse-params (nth split-request 1 "") #"\n" #": ")
+      :body (nth split-request 2 ""))))
