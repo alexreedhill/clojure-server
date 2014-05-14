@@ -1,5 +1,5 @@
 (ns clojure-server.server
-  (:require [clojure.java.io :refer [reader]])
+  (:require [clojure.java.io :refer [reader writer]])
   (:import (java.net ServerSocket InetAddress))
   (:gen-class :main true))
 
@@ -13,14 +13,20 @@
 
 (defn read-request [client-socket]
   (let [request (line-seq (reader client-socket))]
-    (println "REQUEST: " (apply str request))
     request))
 
-(defn run [port address]
-  (read-request (listen (open-server-socket port address))))
+(defn run [server-socket]
+  (read-request (listen server-socket)))
+
+(defn write-response [request server-socket]
+  (with-open [writer (writer server-socket)]
+    (.write writer request)))
+
+(def keep-going (atom true))
 
 (defn -main [& args]
   (println "Server starting")
-  (while true
-    (run 5000 "localhost"))
-  (println "Server stopping"))
+  (with-open [server-socket (open-server-socket 5000 "localhost")]
+    (while @keep-going
+      (write-response (run server-socket) server-socket)
+    (println "Server stopping"))))
