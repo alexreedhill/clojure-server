@@ -1,6 +1,6 @@
 (ns clojure-server.server
   (:require [clojure.java.io :refer [reader writer]])
-  (:import (java.net ServerSocket InetAddress))
+  (:import (java.net Socket ServerSocket InetAddress ConnectException))
   (:gen-class :main true))
 
 (defn open-server-socket [port address]
@@ -12,21 +12,16 @@
     (catch Exception e (println (str "Exception: " e)))))
 
 (defn read-request [client-socket]
-  (let [request (line-seq (reader client-socket))]
-    request))
+  (.readLine (reader client-socket)))
 
-(defn run [server-socket]
-  (read-request (listen server-socket)))
-
-(defn write-response [request server-socket]
-  (with-open [writer (writer server-socket)]
-    (.write writer request)))
+(defn write-response [request client-socket]
+  (with-open [w (writer client-socket)]
+    (.write w (str request \newline))))
 
 (def keep-going (atom true))
 
 (defn -main [& args]
-  (println "Server starting")
-  (with-open [server-socket (open-server-socket 5000 "localhost")]
+  (with-open [server-socket (open-server-socket (first args) (second args))]
     (while @keep-going
-      (write-response (run server-socket) server-socket)
-    (println "Server stopping"))))
+      (let [client-socket (listen server-socket)]
+        (write-response (read-request client-socket) client-socket)))))
