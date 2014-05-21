@@ -24,14 +24,19 @@
     (future (-main 5000 "localhost")))
 
   (it "reads line from client input and responds"
-    (should= "foo" (request-response "foo\r\n\n")))
+    (should= "GET / HTTP/1.1 {: nil} "(request-response "GET / HTTP/1.1\r\n\n")))
 
   (it "reads a multiline request and responds"
-    (should= "GET / HTTP/1.1Foo: Bar" (request-response "GET / HTTP/1.1\r\nFoo: Bar\r\n\n")))
+    (should= "GET / HTTP/1.1 {:foo \"Bar\"} "
+      (request-response "GET / HTTP/1.1\r\nFoo: Bar\r\n\n")))
 
   (it "reads multiple requests and responds"
-    (loop [requests []]
+    (loop [requests ()]
       (if (= (count requests) 2)
-        (should= ["foo" "foo"] requests)
-        (recur (conj requests (request-response "foo\r\n\n")))))))
+        (should= '("GET / HTTP/1.1 {: nil} " "GET / HTTP/1.1 {: nil} ") requests)
+        (recur (conj requests (request-response "GET / HTTP/1.1\r\n\n"))))))
+
+  (it "reads request with body"
+    (should= "GET / HTTP/1.1 {:content-length \"3\"} Foo"
+      (request-response "GET / HTTP/1.1\r\nContent-Length: 3\r\n\nFoo"))))
 

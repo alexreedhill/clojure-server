@@ -1,6 +1,6 @@
 (ns clojure-server.server
-  (:require [clojure.java.io :refer [reader writer]]
-            [clojure.string :refer [blank?]])
+  (:require [clojure-server.request-reader :refer [read-request]]
+            [clojure.java.io :refer [writer]])
   (:import (java.net Socket ServerSocket InetAddress ConnectException))
   (:gen-class :main true))
 
@@ -12,16 +12,14 @@
     (.accept server-socket)
     (catch Exception e (println (str "Exception: " e)))))
 
-(defn read-request [client-socket]
-  (let [in (reader client-socket)]
-    (loop [request []]
-      (if (and (blank? (last request)) (> (count request) 1))
-        request
-        (recur (conj request (.readLine in)))))))
-
 (defn write-response [request client-socket]
   (with-open [w (writer client-socket)]
-    (.write w (apply str request))))
+    (.write w (str
+                (request :method) " "
+                (request :path) " "
+                (request :http-version) " "
+                (request :headers) " "
+                (request :body)))))
 
 (def keep-going (atom true))
 
