@@ -23,6 +23,15 @@
   (before-all
     (future (-main 5000 "localhost")))
 
-  (it "reads line from client input"
-    (should= "foo" (request-response "foo\n"))))
+  (it "reads line from client input and responds"
+    (should= "foo" (request-response "foo\r\n\n")))
+
+  (it "reads a multiline request and responds"
+    (should= "GET / HTTP/1.1Foo: Bar" (request-response "GET / HTTP/1.1\r\nFoo: Bar\r\n\n")))
+
+  (it "reads multiple requests and responds"
+    (loop [requests []]
+      (if (= (count requests) 2)
+        (should= ["foo" "foo"] requests)
+        (recur (conj requests (request-response "foo\r\n\n")))))))
 
