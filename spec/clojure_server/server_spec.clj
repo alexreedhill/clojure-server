@@ -1,7 +1,7 @@
 (ns clojure-server.server-spec
-  (:require [clojure-server.server :refer :all])
-  (:require [clojure.java.io :refer [reader writer]])
-  (:require [speclj.core :refer :all])
+  (:require [clojure-server.server :refer :all]
+            [clojure.java.io :refer [reader writer]]
+            [speclj.core :refer :all])
   (:import (java.net Socket ConnectException)))
 
 (defn connect-socket [port address]

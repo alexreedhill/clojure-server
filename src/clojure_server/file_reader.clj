@@ -1,13 +1,6 @@
 (ns clojure-server.file-reader
-  (:require [clojure.string :refer [trim]]))
-
-(defn my-threading [input & functions]
-  (reduce #(%2 %1) input functions))
-
-(defn string-to-byte-array [string]
-  (byte-array (map (comp byte int) string)))
+  (:require [clojure.string :refer [trim]]
+            [clojure.contrib.io :refer [to-byte-array]]))
 
 (defn read-file [path]
-  (my-threading path slurp trim string-to-byte-array))
-
-
+  (to-byte-array path))

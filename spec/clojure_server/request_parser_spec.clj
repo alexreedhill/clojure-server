@@ -1,6 +1,6 @@
 (ns clojure-server.request-parser-spec
-  (:require [clojure-server.request-parser :refer :all])
-  (:require [speclj.core :refer :all]))
+  (:require [clojure-server.request-parser :refer :all]
+            [speclj.core :refer :all]))
 
 (describe "request parser"
   (it "parses request method"

@@ -1,6 +1,6 @@
 (ns clojure-server.request-parser
-  (:require [clojure.string :refer [split join lower-case]])
-  (:require [clojure-server.parameter-decoder :refer [decode]]))
+  (:require [clojure.string :refer [split join lower-case]]
+            [clojure-server.parameter-decoder :refer [decode]]))
 
 (defn parse-params [params outer-delimiter inner-delimiter]
   (reduce

@@ -1,6 +1,7 @@
 (ns clojure-server.parameter-decoder-spec
-  (:require [clojure-server.parameter-decoder :refer :all])
-  (:require [speclj.core :refer :all]))
+  (:require [clojure-server.parameter-decoder :refer :all]
+            [speclj.core :refer :all]))
+
 
 (describe "parameter decoder"
   (it "Decodes characters required by cob-spec"
