@@ -1,5 +1,5 @@
-(ns clojure-server.server
-  (:require [clojure-server.request-reader :refer [read-request]]
+(ns lazy-server.server
+  (:require [lazy-server.request-reader :refer [read-request]]
             [clojure.java.io :refer [writer]])
   (:import (java.net Socket ServerSocket InetAddress ConnectException))
   (:gen-class :main true))

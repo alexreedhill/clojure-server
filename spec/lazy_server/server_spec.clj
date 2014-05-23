@@ -1,5 +1,5 @@
-(ns clojure-server.server-spec
-  (:require [clojure-server.server :refer :all]
+(ns lazy-server.server-spec
+  (:require [lazy-server.server :refer :all]
             [clojure.java.io :refer [reader writer]]
             [speclj.core :refer :all])
   (:import (java.net Socket ConnectException)))

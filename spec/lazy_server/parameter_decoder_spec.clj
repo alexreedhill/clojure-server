@@ -1,5 +1,5 @@
-(ns clojure-server.parameter-decoder-spec
-  (:require [clojure-server.parameter-decoder :refer :all]
+(ns lazy-server.parameter-decoder-spec
+  (:require [lazy-server.parameter-decoder :refer :all]
             [speclj.core :refer :all]))
 
 

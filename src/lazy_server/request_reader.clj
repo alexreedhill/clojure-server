@@ -1,5 +1,5 @@
-(ns clojure-server.request-reader
-  (:require [clojure-server.request-parser :refer [parse]]
+(ns lazy-server.request-reader
+  (:require [lazy-server.request-parser :refer [parse]]
             [clojure.java.io :refer [reader writer]]
             [clojure.string :refer [blank?]]))
 

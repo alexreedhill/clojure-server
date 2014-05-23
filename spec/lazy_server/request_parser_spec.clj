@@ -1,5 +1,5 @@
-(ns clojure-server.request-parser-spec
-  (:require [clojure-server.request-parser :refer :all]
+(ns lazy-server.request-parser-spec
+  (:require [lazy-server.request-parser :refer :all]
             [speclj.core :refer :all]))
 
 (describe "request parser"

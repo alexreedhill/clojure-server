@@ -1,4 +1,4 @@
-(ns clojure-server.router
+(ns lazy-server.router
   (:require [clojure.string :refer [upper-case]]))
 
 (defmacro defrouter [router-name request & routes]

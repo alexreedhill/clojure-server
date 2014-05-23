@@ -1,4 +1,4 @@
-(ns clojure-server.file-reader
+(ns lazy-server.file-reader
   (:require [clojure.string :refer [trim]]
             [clojure.contrib.io :refer [to-byte-array]]))
 

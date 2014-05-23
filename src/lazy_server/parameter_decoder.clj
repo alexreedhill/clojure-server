@@ -1,4 +1,4 @@
-(ns clojure-server.parameter-decoder)
+(ns lazy-server.parameter-decoder)
 
 (def conversions
  { "%20" \space

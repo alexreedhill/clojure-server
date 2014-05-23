@@ -1,5 +1,5 @@
-(ns clojure-server.router-spec
-  (:require [clojure-server.router :refer :all]
+(ns lazy-server.router-spec
+  (:require [lazy-server.router :refer :all]
             [speclj.core :refer :all]))
 
 (describe "router"
