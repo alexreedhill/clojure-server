@@ -1,13 +1,14 @@
-(ns lazy-server.router
-  (:require [clojure.string :refer [upper-case]]))
+(ns lazy-server.router)
+
+(defn status-line-matches? [route request]
+  (and
+    (= (route :path) (request :path))
+    (= (route :method) (request :method))))
 
 (defmacro defrouter [router-name request & routes]
   `(defn ~router-name [request#]
      (loop [[current-route# & rest-routes# :as routes#] '~routes]
        (cond
-         (= 0 (count routes#)) [nil 404]
-         (and
-           (= (second current-route#) (request# :path))
-           (= (upper-case (first current-route#)) (request# :method)))
-           (last current-route#)
+         (= 0 (count routes#)) {:body nil :code 404}
+         (status-line-matches? current-route# request#) (current-route# :response)
          :else (recur rest-routes#)))))

@@ -6,15 +6,15 @@
   (context "get"
     (before-all
       (defrouter get-router request
-        (get "/" ["root response body" 200])
-        (get "/resource" ["resource body", 200])))
+        {:method "GET" :path "/" :response {:body "root response body" :code 200}}
+        {:method "GET" :path "/resource" :response {:body "resource body" :code 200}}))
 
       (it "routes root request"
-        (should= ["root response body" 200] (get-router {:method "GET" :path "/"})))
+        (should= {:body "root response body" :code 200} (get-router {:method "GET" :path "/"})))
 
       (it "routes resource request"
-        (should= ["resource body" 200] (get-router {:method "GET" :path "/resource"})))
+        (should= {:body "resource body" :code 200} (get-router {:method "GET" :path "/resource"})))
 
       (it "doesn't route post request"
-        (should= [nil 404] (get-router {:method "POST" :path "/"})))))
+        (should= {:body nil :code 404} (get-router {:method "POST" :path "/"})))))
 
