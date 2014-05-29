@@ -1,5 +1,6 @@
 (ns lazy-server.server
   (:require [lazy-server.request-reader :refer [read-request]]
+            [lazy-server.cob-spec-router :refer [cob-spec-router]]
             [clojure.java.io :refer [writer]])
   (:import (java.net Socket ServerSocket InetAddress ConnectException))
   (:gen-class :main true))
@@ -12,14 +13,10 @@
     (.accept server-socket)
     (catch Exception e (println (str "Exception: " e)))))
 
-(defn write-response [request client-socket]
+(defn write-response [request router client-socket]
   (with-open [w (writer client-socket)]
-    (.write w (str
-                (request :method) " "
-                (request :path) " "
-                (request :http-version) " "
-                (request :headers) " "
-                (request :body)))))
+    (let [response (router request)]
+      (.write w response))))
 
 (def keep-going (atom true))
 
@@ -27,4 +24,4 @@
   (with-open [server-socket (open-server-socket (first args) (second args))]
     (while @keep-going
       (let [client-socket (listen server-socket)]
-        (write-response (read-request client-socket) client-socket)))))
+        (write-response (read-request client-socket) (nth args 2) client-socket)))))

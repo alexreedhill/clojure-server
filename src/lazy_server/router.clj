@@ -1,4 +1,5 @@
-(ns lazy-server.router)
+(ns lazy-server.router
+  (:require [lazy-server.response-builder :refer [build]]))
 
 (defn status-line-matches? [route request]
   (and
@@ -9,6 +10,6 @@
   `(defn ~router-name [request#]
      (loop [[current-route# & rest-routes# :as routes#] '~routes]
        (cond
-         (= 0 (count routes#)) {:body nil :code 404}
-         (status-line-matches? current-route# request#) (last current-route#)
+         (= 0 (count routes#)) (build {:body nil :code 404})
+         (status-line-matches? current-route# request#) (build (last current-route#))
          :else (recur rest-routes#)))))

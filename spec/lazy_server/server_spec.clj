@@ -1,5 +1,6 @@
 (ns lazy-server.server-spec
   (:require [lazy-server.server :refer :all]
+            [lazy-server.cob-spec-router :refer [cob-spec-router]]
             [clojure.java.io :refer [reader writer]]
             [speclj.core :refer :all])
   (:import (java.net Socket ConnectException)))
@@ -21,22 +22,22 @@
 
 (describe "server"
   (before-all
-    (future (-main 5000 "localhost")))
+    (future (-main 5000 "localhost" cob-spec-router)))
 
   (it "reads line from client input and responds"
-    (should= "GET / HTTP/1.1 {: nil} "(request-response "GET / HTTP/1.1\r\n\n")))
+    (should=  "200 OK HTTP/1.1" (request-response "GET / HTTP/1.1\r\n\n")))
 
   (it "reads a multiline request and responds"
-    (should= "GET / HTTP/1.1 {:foo \"Bar\"} "
+    (should=  "200 OK HTTP/1.1"
       (request-response "GET / HTTP/1.1\r\nFoo: Bar\r\n\n")))
 
   (it "reads multiple requests and responds"
     (loop [requests ()]
       (if (= (count requests) 2)
-        (should= '("GET / HTTP/1.1 {: nil} " "GET / HTTP/1.1 {: nil} ") requests)
+        (should= '("200 OK HTTP/1.1" "200 OK HTTP/1.1") requests)
         (recur (conj requests (request-response "GET / HTTP/1.1\r\n\n"))))))
 
   (it "reads request with body"
-    (should= "GET / HTTP/1.1 {:content-length \"3\"} Foo"
+    (should= "200 OK HTTP/1.1"
       (request-response "GET / HTTP/1.1\r\nContent-Length: 3\r\n\nFoo"))))
 
