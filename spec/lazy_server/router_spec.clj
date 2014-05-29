@@ -5,9 +5,9 @@
 (describe "router"
   (context "get"
     (before-all
-      (defrouter get-router request
-        {:method "GET" :path "/" :response {:body "root response body" :code 200}}
-        {:method "GET" :path "/resource" :response {:body "resource body" :code 200}}))
+      (defrouter get-router
+        (GET "/" {:body "root response body" :code 200})
+        (GET "/resource" {:body "resource body" :code 200})))
 
       (it "routes root request"
         (should= {:body "root response body" :code 200} (get-router {:method "GET" :path "/"})))
@@ -20,4 +20,3 @@
 
       (it "doesn't route unkown path"
         (should= {:body nil :code 404} (get-router {:method "GET" :path "/foobar"})))))
-
