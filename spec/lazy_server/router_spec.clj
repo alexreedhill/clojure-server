@@ -10,13 +10,13 @@
         (GET "/resource" {:body "resource body" :code 200})))
 
       (it "routes root request"
-        (should= "200 OK HTTP/1.1\r\n\nroot response body" (get-router {:method "GET" :path "/"})))
+        (should= "HTTP/1.1 200 OK\r\n\nroot response body" (get-router {:method "GET" :path "/"})))
 
       (it "routes resource request"
-        (should= "200 OK HTTP/1.1\r\n\nresource body" (get-router {:method "GET" :path "/resource"})))
+        (should= "HTTP/1.1 200 OK\r\n\nresource body" (get-router {:method "GET" :path "/resource"})))
 
       (it "doesn't route unkown method"
-        (should= "404 Not Found HTTP/1.1\r\n\n" (get-router {:method "POST" :path "/"})))
+        (should= "HTTP/1.1 404 Not Found\r\n\n" (get-router {:method "POST" :path "/"})))
 
       (it "doesn't route unkown path"
-        (should= "404 Not Found HTTP/1.1\r\n\n" (get-router {:method "GET" :path "/foobar"})))))
+        (should= "HTTP/1.1 404 Not Found\r\n\n" (get-router {:method "GET" :path "/foobar"})))))

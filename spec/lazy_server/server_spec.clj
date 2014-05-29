@@ -28,19 +28,19 @@
     (future (-main "5000" "localhost" test-router)))
 
   (it "reads line from client input and responds"
-    (should=  "200 OK HTTP/1.1" (request-response "GET / HTTP/1.1\r\n\n")))
+    (should=  "HTTP/1.1 200 OK" (request-response "GET / HTTP/1.1\r\n\n")))
 
   (it "reads a multiline request and responds"
-    (should=  "200 OK HTTP/1.1"
+    (should=  "HTTP/1.1 200 OK"
       (request-response "GET / HTTP/1.1\r\nFoo: Bar\r\n\n")))
 
   (it "reads multiple requests and responds"
     (loop [requests ()]
       (if (= (count requests) 2)
-        (should= '("200 OK HTTP/1.1" "200 OK HTTP/1.1") requests)
+        (should= '("HTTP/1.1 200 OK" "HTTP/1.1 200 OK") requests)
         (recur (conj requests (request-response "GET / HTTP/1.1\r\n\n"))))))
 
   (it "reads request with body"
-    (should= "200 OK HTTP/1.1"
+    (should= "HTTP/1.1 200 OK"
       (request-response "GET / HTTP/1.1\r\nContent-Length: 3\r\n\nFoo"))))
 

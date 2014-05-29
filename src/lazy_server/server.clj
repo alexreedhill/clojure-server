@@ -13,14 +13,18 @@
     (catch Exception e (println (str "Exception: " e)))))
 
 (defn write-response [request router client-socket]
+  (println "Incoming request: " request)
   (with-open [w (writer client-socket)]
     (let [response (router request)]
+      (println "Outgoing response: " response)
       (.write w response))))
 
 (def keep-going (atom true))
 
 (defn -main [& args]
   (with-open [server-socket (open-server-socket (first args) (second args))]
+  (println "Lazy server listening...")
     (while @keep-going
       (let [client-socket (listen server-socket)]
-        (write-response (read-request client-socket) (nth args 2) client-socket)))))
+        (write-response (read-request client-socket) (nth args 2) client-socket))))
+  (println "Lazy server stopping..."))

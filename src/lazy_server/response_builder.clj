@@ -3,12 +3,12 @@
 
 (def status-messages
   { 200 "OK"
-    404 "Not Found"})
+   404 "Not Found"})
 
 (defn build [raw-response]
-  (str (join " "
-    [(raw-response :code)
-    (status-messages (raw-response :code))
-    "HTTP/1.1\r\n\n"])
-    (raw-response :body)))
+  (join "\r\n\n"
+        [(str "HTTP/1.1 "
+              (raw-response :code)
+              " " (status-messages (raw-response :code)))
+        (raw-response :body)]))
 
