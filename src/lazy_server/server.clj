@@ -1,12 +1,11 @@
 (ns lazy-server.server
   (:require [lazy-server.request-reader :refer [read-request]]
-            [lazy-server.cob-spec-router :refer [cob-spec-router]]
             [clojure.java.io :refer [writer]])
   (:import (java.net Socket ServerSocket InetAddress ConnectException))
   (:gen-class :main true))
 
 (defn open-server-socket [port address]
-  (ServerSocket. port 0 (InetAddress/getByName address)))
+  (ServerSocket. (read-string port) 0 (InetAddress/getByName address)))
 
 (defn listen [server-socket]
   (try

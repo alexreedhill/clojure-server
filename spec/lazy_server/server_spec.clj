@@ -1,6 +1,6 @@
 (ns lazy-server.server-spec
   (:require [lazy-server.server :refer :all]
-            [lazy-server.cob-spec-router :refer [cob-spec-router]]
+            [lazy-server.router :refer [defrouter]]
             [clojure.java.io :refer [reader writer]]
             [speclj.core :refer :all])
   (:import (java.net Socket ConnectException)))
@@ -20,9 +20,12 @@
     (.flush out)
     (.readLine in)))
 
+(defrouter test-router
+  (GET "/" {:code 200}))
+
 (describe "server"
   (before-all
-    (future (-main 5000 "localhost" cob-spec-router)))
+    (future (-main "5000" "localhost" test-router)))
 
   (it "reads line from client input and responds"
     (should=  "200 OK HTTP/1.1" (request-response "GET / HTTP/1.1\r\n\n")))
