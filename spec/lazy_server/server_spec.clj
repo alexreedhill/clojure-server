@@ -1,6 +1,6 @@
 (ns lazy-server.server-spec
   (:require [lazy-server.server :refer :all]
-            [lazy-server.router :refer [defrouter]]
+            [lazy-server.router :refer [defrouter GET]]
             [clojure.java.io :refer [reader writer]]
             [speclj.core :refer :all])
   (:import (java.net Socket ConnectException)))
@@ -21,7 +21,7 @@
     (.readLine in)))
 
 (defrouter test-router
-  (GET "/" {:code 200}))
+  (GET "/" request {:code 200}))
 
 (describe "server"
   (before-all

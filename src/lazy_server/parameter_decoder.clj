@@ -1,7 +1,7 @@
 (ns lazy-server.parameter-decoder)
 
 (def conversions
- { "%20" \space
+  {"%20" \space
    "%21" \!
    "%22" \"
    "%3C" \<
@@ -35,4 +35,3 @@
             (into output before-split)
             (conversions (apply str (take 3 after-split))))
           (drop 3 after-split))))))
-

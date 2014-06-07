@@ -1,15 +1,20 @@
 (ns lazy-server.router
   (:require [lazy-server.response-builder :refer [build]]))
 
-(defn status-line-matches? [route request]
-  (and
-    (= (str (first route)) (request :method))
-    (= (second route) (request :path))))
+(defmacro GET [path request-sym response]
+  `(let [handler# (fn [~request-sym] (build ~request-sym ~response))]
+     (fn [request#]
+       (if (and (= ~path (request# :path)) (= (request# :method) "GET"))
+         (handler# request#)))))
+
+(defmacro four-oh-four [request-sym body]
+  `(let [handler# (fn [~request-sym] (build ~request-sym {:code 404 :body ~body}))]
+     (fn [request#] (handler# request#))))
 
 (defmacro defrouter [router-name & routes]
   `(defn ~router-name [request#]
-     (loop [[current-route# & rest-routes# :as routes#] '~routes]
-       (cond
-         (= 0 (count routes#)) (build {:body nil :code 404})
-         (status-line-matches? current-route# request#) (build (last current-route#))
-         :else (recur rest-routes#)))))
+     (loop [routes# '~routes]
+       (let [response# ((eval (first routes#)) request#)]
+         (if (not (nil? response#))
+           response#
+           (recur (rest routes#)))))))
