@@ -17,6 +17,10 @@
   `(let [handler-fn# (fn [~request-sym] (build ~request-sym ~response))]
      (generate-handler ~path ~response ~request-sym handler-fn# "POST")))
 
+(defmacro PUT [path response request-sym]
+  `(let [handler-fn# (fn [~request-sym] (build ~request-sym ~response))]
+     (generate-handler ~path ~response ~request-sym handler-fn# "PUT")))
+
 (defmacro OPTIONS [path response request-sym]
   `(let [handler-fn# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
      (generate-handler ~path ~response ~request-sym handler-fn# "OPTIONS")))

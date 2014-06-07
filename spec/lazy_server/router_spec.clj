@@ -30,18 +30,29 @@
         (get-router {:method "GET" :path "/foobar"}))))
 
   (context "post"
-    (defrouter post-router request
-      (POST "/form" {:code 200}))
+    (before-all
+      (defrouter post-router request
+        (POST "/form" {:code 200})))
 
     (it "routes post request"
       (should= "HTTP/1.1 200 OK\r\n\n"
         (post-router {:method "POST" :path "/form"}))))
 
   (context "options"
-    (defrouter options-router request
-      (OPTIONS "/method_options" {:code 200}))
+    (before-all
+      (defrouter options-router request
+        (OPTIONS "/method_options" {:code 200})))
 
     (it "routes options request"
       (should= "HTTP/1.1 200 OK\r\nAllow: GET,HEAD,POST,OPTIONS,PUT\r\n\n"
-        (options-router {:method "OPTIONS" :path "/method_options"})))))
+        (options-router {:method "OPTIONS" :path "/method_options"}))))
+
+  (context "put"
+    (before-all
+      (defrouter put-router request
+        (PUT "/form" {:code 200})))
+
+    (it "routes put request"
+      (should= "HTTP/1.1 200 OK\r\n\n"
+        (put-router {:method "PUT" :path "/form"})))))
 
