@@ -8,10 +8,10 @@
       (defn get-response-body [request]
         (str (request :path) " response body"))
 
-      (defrouter get-router
-        (GET "/" request {:code 200 :body (get-response-body request)})
-        (GET "/resource" request {:code 200 :body (get-response-body request)})
-        (four-oh-four request "Sorry, there's nothing here!")))
+      (defrouter get-router request
+        (GET "/" {:code 200 :body (get-response-body request)})
+        (GET "/resource" {:code 200 :body (get-response-body request)})
+        (four-oh-four "Sorry, there's nothing here!")))
 
     (it "routes root request"
       (should= "HTTP/1.1 200 OK\r\n\n/ response body"

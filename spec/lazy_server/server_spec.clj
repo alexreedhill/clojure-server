@@ -20,8 +20,8 @@
     (.flush out)
     (.readLine in)))
 
-(defrouter test-router
-  (GET "/" request {:code 200}))
+(defrouter test-router request
+  (GET "/" {:code 200}))
 
 (describe "server"
   (before-all
