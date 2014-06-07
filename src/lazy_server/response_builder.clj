@@ -4,7 +4,11 @@
 
 (def status-messages
   {200 "OK"
+   301 "Moved Permanently"
    404 "Not Found"})
+
+(defn redirect [path]
+  {:code 301 :headers {"Location" path}})
 
 (defn options-response [response]
   (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))

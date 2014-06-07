@@ -13,4 +13,8 @@
 
   (it "builds response with headers"
     (should= "HTTP/1.1 200 OK\r\nBoo: Far\nFoo: Bar\r\n\nbody"
-      (build {:path "/"} {:code 200 :headers {"Foo" "Bar" "Boo" "Far"} :body "body"}))))
+      (build {:path "/"} {:code 200 :headers {"Foo" "Bar" "Boo" "Far"} :body "body"})))
+
+  (it "builds redirect response"
+    (should= "HTTP/1.1 301 Moved Permanently\r\nLocation: /\r\n\n"
+      (build {:path "/redirect" } (redirect "/")))))
