@@ -6,7 +6,7 @@
   (reduce
     (fn [acc param]
       (let [[k v] (split param inner-delimiter)]
-        (assoc acc (keyword (lower-case k)) (decode v))))
+        (assoc acc k (decode v))))
     {}
     (split params outer-delimiter)))
 

@@ -1,10 +1,22 @@
 (ns lazy-server.router
-  (:require [lazy-server.response-builder :refer [build]]))
+  (:require [lazy-server.response-builder :refer [build options-response]]))
 
 (defmacro GET [path response request-sym]
   `(let [handler# (fn [~request-sym] (build ~request-sym ~response))]
      (fn [request#]
        (if (and (= ~path (request# :path)) (= (request# :method) "GET"))
+         (handler# request#)))))
+
+(defmacro POST [path response request-sym]
+  `(let [handler# (fn [~request-sym] (build ~request-sym ~response))]
+     (fn [request#]
+       (if (and (= ~path (request# :path)) (= (request# :method) "POST"))
+         (handler# request#)))))
+
+(defmacro OPTIONS [path response request-sym]
+  `(let [handler# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
+     (fn [request#]
+       (if (= (request# :method) "OPTIONS")
          (handler# request#)))))
 
 (defmacro four-oh-four [body request-sym]

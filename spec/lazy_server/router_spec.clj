@@ -27,4 +27,21 @@
 
     (it "doesn't route unkown path"
       (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
-        (get-router {:method "GET" :path "/foobar"})))))
+        (get-router {:method "GET" :path "/foobar"}))))
+
+  (context "post"
+    (defrouter post-router request
+      (POST "/form" {:code 200}))
+
+    (it "routes post request"
+      (should= "HTTP/1.1 200 OK\r\n\n"
+        (post-router {:method "POST" :path "/form"}))))
+
+  (context "options"
+    (defrouter options-router request
+      (OPTIONS "/method_options" {:code 200}))
+
+    (it "routes options request"
+      (should= "HTTP/1.1 200 OK\r\nAllow: GET,HEAD,POST,OPTIONS,PUT\r\n\n"
+        (options-router {:method "OPTIONS" :path "/method_options"})))))
+

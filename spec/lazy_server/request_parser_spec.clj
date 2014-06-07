@@ -13,14 +13,14 @@
     (should= "HTTP/1.1" ((parse ["GET / HTTP/1.1"]) :http-version)))
 
   (it "parses query string parameters"
-    (should= {:foo "bar"} ((parse ["GET /?foo=bar HTTP/1.1"]) :query-params)))
+    (should= {"foo" "bar"} ((parse ["GET /?foo=bar HTTP/1.1"]) :query-params)))
 
   (it "parses a single header"
-    (should= {:foo "Bar"} ((parse ["GET / HTTP/1.1" "Foo: Bar"]) :headers)))
+    (should= {"Foo" "Bar"} ((parse ["GET / HTTP/1.1" "Foo: Bar"]) :headers)))
 
   (it "parses multiple headers"
-    (should= {:foo "Bar" :boo "Far"}
+    (should= {"Foo" "Bar" "Boo" "Far"}
       ((parse ["GET / HTTP/1.1" "Foo: Bar" "Boo: Far"]) :headers)))
 
   (it "decodes query string parameters with parameter decoder"
-    (should= {:foo "bar?"} ((parse ["GET /?foo=bar%3F HTTP/1.1"]) :query-params))))
+    (should= {"foo" "bar?"} ((parse ["GET /?foo=bar%3F HTTP/1.1"]) :query-params))))
