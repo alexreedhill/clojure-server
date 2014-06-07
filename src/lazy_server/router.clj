@@ -1,23 +1,25 @@
 (ns lazy-server.router
   (:require [lazy-server.response-builder :refer [build options-response]]))
 
+(defn request-matches? [request path method]
+  (and (= method (request :method)) (= path (request :path))))
+
+(defmacro generate-handler [path response request-sym handler-fn method]
+  `(fn [request#]
+     (if (request-matches? request# ~path ~method)
+       (~handler-fn request#))))
+
 (defmacro GET [path response request-sym]
-  `(let [handler# (fn [~request-sym] (build ~request-sym ~response))]
-     (fn [request#]
-       (if (and (= ~path (request# :path)) (= (request# :method) "GET"))
-         (handler# request#)))))
+  `(let [handler-fn# (fn [~request-sym] (build ~request-sym ~response))]
+     (generate-handler ~path ~response ~request-sym handler-fn# "GET")))
 
 (defmacro POST [path response request-sym]
-  `(let [handler# (fn [~request-sym] (build ~request-sym ~response))]
-     (fn [request#]
-       (if (and (= ~path (request# :path)) (= (request# :method) "POST"))
-         (handler# request#)))))
+  `(let [handler-fn# (fn [~request-sym] (build ~request-sym ~response))]
+     (generate-handler ~path ~response ~request-sym handler-fn# "POST")))
 
 (defmacro OPTIONS [path response request-sym]
-  `(let [handler# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
-     (fn [request#]
-       (if (= (request# :method) "OPTIONS")
-         (handler# request#)))))
+  `(let [handler-fn# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
+     (generate-handler ~path ~response ~request-sym handler-fn# "OPTIONS")))
 
 (defmacro four-oh-four [body request-sym]
   `(let [handler# (fn [~request-sym] (build ~request-sym {:code 404 :body ~body}))]
