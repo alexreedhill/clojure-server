@@ -6,18 +6,28 @@
   (reduce
     (fn [acc param]
       (let [[k v] (split param inner-delimiter)]
-        (assoc acc (keyword (lower-case k)) v)))
+        (assoc acc (keyword (lower-case k)) (decode v))))
     {}
     (split params outer-delimiter)))
+
+(defn parse-headers [headers]
+  (let [header-string (join \newline headers)]
+    (if header-string
+      (parse-params header-string #"\n" #": "))))
+
+(defn parse-query-string [url]
+  (let [query-string (second (split url #"\?"))]
+    (if query-string
+      (parse-params query-string #"&" #"="))))
 
 (defn parse-status-line [raw-status-line]
   (let [[method url version] (split raw-status-line #" ")]
     {:method method
      :path (first (split url #"\?"))
-     :query-params (parse-params (decode (second (split url #"\?"))) #"&" #"=")
+     :query-params (parse-query-string url)
      :http-version version}))
 
 (defn parse [status-and-headers]
   (assoc
     (parse-status-line (first status-and-headers))
-    :headers (parse-params (join \newline (rest status-and-headers)) #"\n" #": ")))
+    :headers (parse-headers (rest status-and-headers))))

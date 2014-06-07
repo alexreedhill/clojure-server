@@ -23,4 +23,4 @@
       ((parse ["GET / HTTP/1.1" "Foo: Bar" "Boo: Far"]) :headers)))
 
   (it "decodes query string parameters with parameter decoder"
-    (should= {:foo "bar"} ((parse ["GET /?foo%3Dbar HTTP/1.1"]) :query-params))))
+    (should= {:foo "bar?"} ((parse ["GET /?foo=bar%3F HTTP/1.1"]) :query-params))))
