@@ -6,7 +6,7 @@
   (with-open [reader (input-stream file)]
     (let [buffer (byte-array (.length file))]
       (.read reader buffer)
-      buffer)))
+      (bytes buffer))))
 
 (defn write-to-file [path content]
   (with-open [w (writer path)]

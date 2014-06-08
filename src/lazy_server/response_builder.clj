@@ -1,5 +1,6 @@
 (ns lazy-server.response-builder
-  (:require [lazy-server.file-interactor :refer [read-file write-to-file]]))
+  (:require [lazy-server.file-interactor :refer [read-file write-to-file]]
+            [pantomime.mime :refer [mime-type-of]]))
 
 (def status-messages
   {200 "OK"
@@ -16,7 +17,9 @@
   (let [file-contents (read-file (request :path))]
     (if (nil? file-contents)
       {:code 404}
-      {:code 200 :body file-contents})))
+      {:code 200
+       :headers {"Content-Type" (mime-type-of (request :path))}
+       :body file-contents})))
 
 (defn build-status-line [response]
   (str "HTTP/1.1 "
