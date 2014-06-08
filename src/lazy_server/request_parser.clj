@@ -11,7 +11,7 @@
     (split params outer-delimiter)))
 
 (defn parse-headers [headers]
-  (let [header-string (join \newline headers)]
+  (let [header-string (join "\n" headers)]
     (if header-string
       (parse-params header-string #"\n" #": "))))
 
