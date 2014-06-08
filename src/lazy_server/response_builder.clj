@@ -1,6 +1,5 @@
 (ns lazy-server.response-builder
-  (:require [lazy-server.file-interactor :refer [write-to-file]]))
-
+  (:require [lazy-server.file-interactor :refer [read-file write-to-file]]))
 
 (def status-messages
   {200 "OK"
@@ -12,6 +11,12 @@
 
 (defn options-response [response]
   (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
+
+(defn serve-file [request]
+  (let [file-contents (read-file (request :path))]
+    (if (nil? file-contents)
+      {:code 404}
+      {:code 200 :body file-contents})))
 
 (defn build-status-line [response]
   (str "HTTP/1.1 "
