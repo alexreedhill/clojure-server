@@ -6,11 +6,7 @@
   (:import (java.net Socket ConnectException)))
 
 (defn connect-socket [port address]
-  (try
-    (Socket. address port)
-    (catch ConnectException e
-      (println "retrying socket connection")
-      (connect-socket port address))))
+    (Socket. address port))
 
 (defn request-response [request]
   (with-open [socket (connect-socket 5000 "localhost")

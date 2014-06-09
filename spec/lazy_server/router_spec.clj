@@ -1,5 +1,6 @@
 (ns lazy-server.router-spec
   (:require [lazy-server.router :refer :all]
+            [lazy-server.spec-helper :refer [bytes-to-string]]
             [speclj.core :refer :all]))
 
 (describe "router"
@@ -15,19 +16,19 @@
 
     (it "routes root request"
       (should= "HTTP/1.1 200 OK\r\n\n/ response body"
-        (get-router {:method "GET" :path "/"})))
+        (bytes-to-string (get-router {:method "GET" :path "/"}))))
 
     (it "routes resource request"
       (should= "HTTP/1.1 200 OK\r\n\n/resource response body"
-        (get-router {:method "GET" :path "/resource"})))
+        (bytes-to-string (get-router {:method "GET" :path "/resource"}))))
 
     (it "doesn't route unkown method"
       (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
-        (get-router {:method "POST" :path "/"})))
+        (bytes-to-string (get-router {:method "POST" :path "/"}))))
 
     (it "doesn't route unkown path"
       (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
-        (get-router {:method "GET" :path "/foobar"}))))
+        (bytes-to-string (get-router {:method "GET" :path "/foobar"})))))
 
   (context "post"
     (before-all
@@ -36,7 +37,7 @@
 
     (it "routes post request"
       (should= "HTTP/1.1 200 OK\r\n\n"
-        (post-router {:method "POST" :path "/form"}))))
+        (bytes-to-string (post-router {:method "POST" :path "/form"})))))
 
   (context "options"
     (before-all
@@ -45,7 +46,7 @@
 
     (it "routes options request"
       (should= "HTTP/1.1 200 OK\r\nAllow: GET,HEAD,POST,OPTIONS,PUT\r\n\n"
-        (options-router {:method "OPTIONS" :path "/method_options"}))))
+        (bytes-to-string (options-router {:method "OPTIONS" :path "/method_options"})))))
 
   (context "put"
     (before-all
@@ -54,5 +55,5 @@
 
     (it "routes put request"
       (should= "HTTP/1.1 200 OK\r\n\n"
-        (put-router {:method "PUT" :path "/form"})))))
+        (bytes-to-string (put-router {:method "PUT" :path "/form"}))))))
 

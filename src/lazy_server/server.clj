@@ -1,8 +1,10 @@
 (ns lazy-server.server
   (:require [lazy-server.request-reader :refer [read-request]]
             [lazy-server.router :refer :all]
-            [clojure.java.io :refer [writer]])
-  (:import (java.net Socket ServerSocket InetAddress))
+            [lazy-server.spec-helper :refer [bytes-to-string]]
+            [clojure.java.io :refer [output-stream]])
+  (:import (java.net Socket ServerSocket InetAddress)
+           (java.io OutputStream BufferedOutputStream DataOutputStream))
   (:gen-class :main true))
 
 (defn open-server-socket [port address]
@@ -15,10 +17,12 @@
 
 (defn write-response [request router client-socket]
   (println "Incoming request: " request)
-  (with-open [w (writer client-socket)]
+  (with-open [out (java.io.DataOutputStream.
+                    (java.io.BufferedOutputStream.
+                      (.getOutputStream client-socket)))]
     (let [response (router request)]
-      (println "Outgoing response: " response)
-      (.write w response))))
+      (println "Outgoing response: " (bytes-to-string response))
+      (.write out (bytes response) 0 (count response)))))
 
 (def keep-going (atom true))
 

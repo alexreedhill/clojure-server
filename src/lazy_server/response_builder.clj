@@ -1,6 +1,7 @@
 (ns lazy-server.response-builder
   (:require [lazy-server.file-interactor :refer [read-file write-to-file]]
-            [pantomime.mime :refer [mime-type-of]]))
+            [pantomime.mime :refer [mime-type-of]])
+  (import (java.lang IllegalArgumentException NullPointerException)))
 
 (def status-messages
   {200 "OK"
@@ -43,10 +44,16 @@
                (str output (build-header-string headers)))))))
 
 (defn build-body [response]
-  (str "\r\n\n" (response :body)))
+  (try
+    (.getBytes (response :body))
+    (catch IllegalArgumentException e (response :body))
+    (catch NullPointerException e (byte-array 0))))
 
 (defn build [request response]
-  (str
-    (build-status-line response)
-    (build-headers response)
-    (build-body response)))
+  (byte-array
+    (mapcat seq
+            [(.getBytes
+               (str
+                 (build-status-line response)
+                 (build-headers response) "\r\n\n"))
+            (build-body response)])))
