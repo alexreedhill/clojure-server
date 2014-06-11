@@ -24,11 +24,15 @@
   (it "builds sucessful file contents response"
     (with-redefs [read-file (fn [path] "file1 contents")]
       (let [request {:path "/file1.txt"}]
-        (should= (str "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents")
+        (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
           (bytes-to-string (build request (serve-file request)))))))
 
   (it "builds unsucessful file contents response"
     (with-redefs [read-file (fn [path] nil)]
       (let [request {:path "/file1.txt"}]
-        (should= (str "HTTP/1.1 404 Not Found\r\n\n")
-          (bytes-to-string (build request (serve-file request))))))))
+        (should= "HTTP/1.1 404 Not Found\r\n\n"
+          (bytes-to-string (build request (serve-file request)))))))
+
+  (it "builds method not allowed response"
+    (should= {:code 405 :headers {"Allow" "GET,POST"}}
+      (method-not-allowed-response ["GET" "POST"]))))

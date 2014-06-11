@@ -55,5 +55,10 @@
 
     (it "routes put request"
       (should= "HTTP/1.1 200 OK\r\n\n"
-        (bytes-to-string (put-router {:method "PUT" :path "/form"}))))))
+        (bytes-to-string (put-router {:method "PUT" :path "/form"})))))
+
+  (context "method not allowed"
+    (it "routes method not allowed"
+      (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\n\n"
+        (bytes-to-string (check-method-not-allowed {:method "POST" :path "/"} ((GET "/" {:code 200} request))))))))
 

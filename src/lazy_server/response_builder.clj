@@ -1,18 +1,23 @@
 (ns lazy-server.response-builder
   (:require [lazy-server.file-interactor :refer [read-file write-to-file]]
+            [clojure.string :refer [join]]
             [pantomime.mime :refer [mime-type-of]])
   (import (java.lang IllegalArgumentException NullPointerException)))
 
 (def status-messages
   {200 "OK"
    301 "Moved Permanently"
-   404 "Not Found"})
+   404 "Not Found"
+   405 "Method Not Allowed"})
 
 (defn redirect [path]
   {:code 301 :headers {"Location" path}})
 
 (defn options-response [response]
   (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
+
+(defn method-not-allowed-response [allowed]
+  {:code 405 :headers {"Allow" (join "," allowed)}})
 
 (defn serve-file [request]
   (let [file-contents (read-file (request :path))]

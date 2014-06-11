@@ -1,13 +1,27 @@
 (ns lazy-server.router
-  (:require [lazy-server.response-builder :refer [build options-response]]))
+  (:require [lazy-server.response-builder :refer [build options-response method-not-allowed-response]]))
+
+(defn path-matches? [request path]
+  (= path (request :path)))
+
+(defn method-matches? [request method]
+  (= method (request :method)))
 
 (defn request-matches? [request path method]
-  (and (= method (request :method)) (= path (request :path))))
+  (and (method-matches? request method) (path-matches? request path)))
 
 (defmacro generate-handler [path response request-sym handler-fn method]
   `(fn [request#]
      (if (request-matches? request# ~path ~method)
        (~handler-fn request#))))
+
+(defmacro check-method-not-allowed [request routes]
+  `(loop [routes# '~routes
+          allowed#     []]
+     (cond
+       (= (count routes#) 0) (build ~request (method-not-allowed-response allowed#))
+       (path-matches? ~request (second (first routes#))) (recur (rest routes#) (conj allowed# (str (first (first routes#)))))
+       :else (recur (rest routes#) allowed#))))
 
 (defmacro GET [path response request-sym]
   `(let [handler-fn# (fn [~request-sym] (build ~request-sym ~response))]
@@ -33,6 +47,7 @@
   `(defn ~router-name [request#]
      (loop [routes# '~routes]
        (let [response# ((eval (concat (first routes#) '(~request-sym))) request#)]
-         (if (not (nil? response#))
-           response#
-           (recur (rest routes#)))))))
+         (cond
+           (not (nil? response#)) response#
+           (= (count routes#) 1) (check-method-not-allowed request# '~routes)
+           :else (recur (rest routes#)))))))
