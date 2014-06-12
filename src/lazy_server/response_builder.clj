@@ -1,11 +1,13 @@
 (ns lazy-server.response-builder
-  (:require [lazy-server.file-interactor :refer [read-file write-to-file]]
+  (:require [lazy-server.file-interactor :refer [read-partial-file read-entire-file
+                                                 write-to-file]]
             [clojure.string :refer [join]]
             [pantomime.mime :refer [mime-type-of]])
   (import (java.lang IllegalArgumentException NullPointerException)))
 
 (def status-messages
   {200 "OK"
+   206 "Partial Content"
    301 "Moved Permanently"
    404 "Not Found"
    405 "Method Not Allowed"})
@@ -19,13 +21,25 @@
 (defn method-not-allowed-response [allowed]
   {:code 405 :headers {"Allow" (join "," allowed)}})
 
+(defn file-response [file-contents request code]
+  (if (nil? file-contents)
+    {:code 404}
+    {:code code
+     :headers {"Content-Type" (mime-type-of (request :path))}
+     :body file-contents}))
+
+(defn serve-partial-file [request]
+  (let [file-contents (read-partial-file (request :path) ((request :headers) "Range"))]
+    (file-response file-contents request 206)))
+
+(defn serve-entire-file [request]
+  (let [file-contents (read-entire-file (request :path))]
+    (file-response file-contents request 200)))
+
 (defn serve-file [request]
-  (let [file-contents (read-file (request :path) (get (request :headers) "Range" ""))]
-    (if (nil? file-contents)
-      {:code 404}
-      {:code 200
-       :headers {"Content-Type" (mime-type-of (request :path))}
-       :body file-contents})))
+  (if ((request :headers) "Range")
+    (serve-partial-file request)
+    (serve-entire-file request)))
 
 (defn build-status-line [response]
   (str "HTTP/1.1 "

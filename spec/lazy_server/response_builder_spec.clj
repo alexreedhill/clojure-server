@@ -1,6 +1,6 @@
 (ns lazy-server.response-builder-spec
   (:require [lazy-server.response-builder :refer :all]
-            [lazy-server.file-interactor :refer [read-file]]
+            [lazy-server.file-interactor :refer [read-entire-file read-partial-file]]
             [lazy-server.spec-helper :refer [bytes-to-string]]
             [speclj.core :refer :all]))
 
@@ -19,20 +19,28 @@
 
   (it "builds redirect response"
     (should= "HTTP/1.1 301 Moved Permanently\r\nLocation: /\r\n\n"
-     (bytes-to-string (build {:path "/redirect" } (redirect "/")))))
+      (bytes-to-string (build {:path "/redirect" } (redirect "/")))))
 
-  (it "builds sucessful file contents response"
-    (with-redefs [read-file (fn [path range-header] "file1 contents")]
-      (let [request {:path "/file1.txt"}]
-        (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
-          (bytes-to-string (build request (serve-file request)))))))
+  (context "serve file"
+    (it "builds sucessful file contents response"
+      (with-redefs [read-entire-file (fn [path] "file1 contents")]
+        (let [request {:path "/file1.txt" :headers {}}]
+          (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
+            (bytes-to-string (build request (serve-file request)))))))
 
-  (it "builds unsucessful file contents response"
-    (with-redefs [read-file (fn [path range-header] nil)]
-      (let [request {:path "/file1.txt"}]
-        (should= "HTTP/1.1 404 Not Found\r\n\n"
-          (bytes-to-string (build request (serve-file request)))))))
+    (it "builds unsucessful file contents response"
+      (with-redefs [read-entire-file (fn [path] nil)]
+        (let [request {:path "/file1.txt" :headers {}}]
+          (should= "HTTP/1.1 404 Not Found\r\n\n"
+            (bytes-to-string (build request (serve-file request)))))))
+
+    (it "serves partial content"
+      (with-redefs [read-partial-file (fn [path range-header] "test")]
+        (let [request {:path "/file1.txt" :headers {"Range" "bytes=0-4"}}]
+          (should= "HTTP/1.1 206 Partial Content\r\nContent-Type: text/plain\r\n\ntest"
+            (bytes-to-string (build request (serve-file request))))))))
 
   (it "builds method not allowed response"
     (should= {:code 405 :headers {"Allow" "GET,POST"}}
       (method-not-allowed-response ["GET" "POST"]))))
+
