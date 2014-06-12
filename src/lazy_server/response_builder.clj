@@ -20,7 +20,7 @@
   {:code 405 :headers {"Allow" (join "," allowed)}})
 
 (defn serve-file [request]
-  (let [file-contents (read-file (request :path))]
+  (let [file-contents (read-file (request :path) (get (request :headers) "Range" ""))]
     (if (nil? file-contents)
       {:code 404}
       {:code 200
