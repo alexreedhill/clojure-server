@@ -29,11 +29,11 @@
      :body file-contents}))
 
 (defn serve-partial-file [request]
-  (let [file-contents (read-partial-file (request :path) ((request :headers) "Range"))]
+  (let [file-contents (read-partial-file (str "public/" (request :path)) ((request :headers) "Range"))]
     (file-response file-contents request 206)))
 
 (defn serve-entire-file [request]
-  (let [file-contents (read-entire-file (request :path))]
+  (let [file-contents (read-entire-file (str "public/" (request :path)))]
     (file-response file-contents request 200)))
 
 (defn serve-file [request]
