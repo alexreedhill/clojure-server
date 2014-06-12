@@ -12,7 +12,7 @@
       (defrouter get-router request
         (GET "/" {:code 200 :body (get-response-body request)})
         (GET "/resource" {:code 200 :body (get-response-body request)})
-        (four-oh-four "Sorry, there's nothing here!")))
+        (not-found "Sorry, there's nothing here!")))
 
     (it "routes root request"
       (should= "HTTP/1.1 200 OK\r\n\n/ response body"
@@ -54,29 +54,22 @@
         (bytes-to-string (put-router {:method "PUT" :path "/form"})))))
 
   (context "method not allowed"
-    (it "method not allowed returns response"
+    (it "returns response"
       (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\n\n"
-        (bytes-to-string (method-not-allowed {:method "POST" :path "/"} request ((GET "/" {:code 200}))))))
-
-    (it "routes method not allowed without four-oh-four defined"
-      (defrouter not-allowed-router request
-        (GET "/" {:code 200})
-        (POST "/" {:code 200}))
-      (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET,POST\r\n\n"
-        (bytes-to-string (not-allowed-router {:method "PUT" :path "/"}))))
+        (bytes-to-string (client-error {:method "POST" :path "/"} request ((GET "/" {:code 200}))))))
 
     (context "not found"
       (before-all
         (defrouter not-allowed-router request
           (GET "/" {:code 200})
           (POST "/" {:code 200})
-          (four-oh-four "Sorry, there's nothing here!")))
+          (not-found "Sorry, there's nothing here!")))
 
-      (it "routes method not allowed with four-oh-four defined"
+      (it "routes method not allowed with not-found defined"
         (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET,POST\r\n\n"
           (bytes-to-string (not-allowed-router {:method "PUT" :path "/"}))))
 
-      (it "routes to four-oh-four if no path or method matches request"
+      (it "routes to not-found if no path or method matches request"
         (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
           (bytes-to-string (not-allowed-router {:method "GET" :path "/foobar"}))))))
 
@@ -105,16 +98,16 @@
       (it "doesn't match request with route if different path"
         (should= false (request-matches? {:path "/" :method "POST"} "/foobar" "POST")))))
 
-  (context "last-route?"
-    (it "determines last route is false when only one route is defined"
-      (let [routes '(route)]
-        (should= false (last-route? routes routes))))
+  (context "client-error?"
+    (it "determines client error is false when only one route is defined"
+      (let [routes '((GET "/" {:code 200}))]
+        (should= false (client-error? routes))))
 
-    (it "determines last route is false with more than one route left"
-      (let [routes '(route1 route2)]
-        (should= false (last-route? routes routes))))
+    (it "determines client error is false with more than one route left"
+      (let [routes '((GET "/" {:code 200}) (POST "/" {:code 200}))]
+        (should= false (client-error? routes))))
 
-    (it "determines last route is true if there is only one route left"
-      (let [routes '(route1 route2)]
-        (should= true (last-route? (list (last routes)) routes))))))
+    (it "determines client error is true if only not found route is left"
+      (let [routes '((not-found "Sorry, there's nothing here!"))]
+        (should= true (client-error? routes))))))
 

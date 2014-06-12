@@ -15,15 +15,6 @@
      (if (request-matches? request# ~path ~method)
        (~handler-fn request#))))
 
-(defmacro method-not-allowed [request request-sym routes]
-  `(loop [routes# '~routes
-          allowed#     []]
-     (cond
-       (and (= (count routes#) 0) (> (count allowed#) 0)) (build ~request (method-not-allowed-response allowed#))
-       (= (count routes#) 0) ((eval (concat (last '~routes) '(~request-sym))) ~request)
-       (path-matches? ~request (second (first routes#))) (recur (rest routes#) (conj allowed# (str (first (first routes#)))))
-       :else (recur (rest routes#) allowed#))))
-
 (defmacro GET [path response request-sym]
   `(let [handler-fn# (fn [~request-sym] (build ~request-sym ~response))]
      (generate-handler ~path ~response ~request-sym handler-fn# "GET")))
@@ -44,14 +35,29 @@
   `(let [handler# (fn [~request-sym] (build ~request-sym {:code 404 :body ~body}))]
      (fn [request#] (handler# request#))))
 
-(defn last-route? [routes-left total-routes]
-  (and (= (count routes-left) 1) (> (count total-routes) 1)))
+(defn allowed-methods? [routes allowed]
+  (and (= (count routes) 0) (> (count allowed) 0)))
+
+(defn four-oh-four? [routes]
+  (= (count routes) 0))
+
+(defmacro client-error [request request-sym routes]
+  `(loop [routes# '~routes
+          allowed#     []]
+     (cond
+       (allowed-methods? routes# allowed#) (build ~request (method-not-allowed-response allowed#))
+       (four-oh-four? routes#) (build ~request {:code 404 :body (last (last '~routes))})
+       (path-matches? ~request (second (first routes#))) (recur (rest routes#) (conj allowed# (str (first (first routes#)))))
+       :else (recur (rest routes#) allowed#))))
+
+(defn client-error? [routes]
+  (and (= (count routes) 1) (= (first (last routes)) 'not-found)))
 
 (defmacro defrouter [router-name request-sym & routes]
   `(defn ~router-name [request#]
      (loop [routes# '~routes]
-       (let [response# ((eval (concat (first routes#) '(~request-sym))) request#)]
+       (let [route# (concat (first routes#) '(~request-sym))]
          (cond
-           (last-route? routes# '~routes) (method-not-allowed request# ~request-sym ~routes)
-           (not (nil? response#)) response#
-           :else (recur (rest routes#)))))))
+         (client-error? routes#) (client-error request# ~request-sym ~routes)
+         (not (nil? ((eval route#) request#))) ((eval route#) request#)
+         :else (recur (rest routes#)))))))
