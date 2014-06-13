@@ -21,6 +21,10 @@
     (should= "HTTP/1.1 301 Moved Permanently\r\nLocation: /\r\n\n"
       (bytes-to-string (build {:path "/redirect" } (redirect "/")))))
 
+  (it "builds unauthorized response"
+    (should= "HTTP/1.1 401 Unauthorized\r\n\n"
+      (bytes-to-string (build {:path "/restricted"} {:code 401}))))
+
   (context "serve file"
     (it "builds sucessful file contents response"
       (with-redefs [read-file (fn [path] "file1 contents")]

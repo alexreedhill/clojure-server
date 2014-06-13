@@ -54,6 +54,6 @@
      (loop [routes# '~routes]
        (let [route# (concat (first routes#) '(~request-sym))]
          (cond
-         (client-error? routes#) (client-error request# ~request-sym ~routes)
-         (not (nil? ((eval route#) request#))) ((eval route#) request#)
-         :else (recur (rest routes#)))))))
+           (client-error? routes#) (client-error request# ~request-sym ~routes)
+           (not (nil? ((eval route#) request#))) ((eval route#) request#)
+           :else (recur (rest routes#)))))))

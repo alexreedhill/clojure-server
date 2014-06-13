@@ -1,5 +1,6 @@
 (ns lazy-server.response-builder
   (:require [lazy-server.file-interactor :refer [read-file read-partial-file write-to-file]]
+            [lazy-server.basic-authenticator :refer [basic-auth]]
             [clojure.string :refer [join split]]
             [pantomime.mime :refer [mime-type-of]]))
 
@@ -7,6 +8,7 @@
   {200 "OK"
    206 "Partial Content"
    301 "Moved Permanently"
+   401 "Unauthorized"
    404 "Not Found"
    405 "Method Not Allowed"})
 
@@ -29,8 +31,7 @@
 (defn serve-partial-file [request]
   (let [range (second (split ((request :headers) "Range") #"="))
         [min max] (map read-string (split range #"-"))
-        file-contents (read-partial-file
-                        (str "public/" (request :path)) min max)]
+        file-contents (read-partial-file (str "public/" (request :path)) min max)]
     (file-response file-contents request 206)))
 
 (defn serve-entire-file [request]

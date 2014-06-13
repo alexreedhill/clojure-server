@@ -7,5 +7,6 @@
   :plugins [[speclj "3.0.1"]]
   :test-paths ["spec"]
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [com.novemberain/pantomime "2.2.0"]]
+                 [com.novemberain/pantomime "2.2.0"]
+                 [org.clojure/data.codec "0.1.0"]]
   :main lazy-server.server)
