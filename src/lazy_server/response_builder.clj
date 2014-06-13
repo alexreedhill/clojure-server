@@ -1,9 +1,7 @@
 (ns lazy-server.response-builder
-  (:require [lazy-server.file-interactor :refer [read-partial-file read-entire-file
-                                                 write-to-file]]
+  (:require [lazy-server.file-interactor :refer [read-file read-partial-file write-to-file]]
             [clojure.string :refer [join]]
-            [pantomime.mime :refer [mime-type-of]])
-  (import (java.lang IllegalArgumentException NullPointerException)))
+            [pantomime.mime :refer [mime-type-of]]))
 
 (def status-messages
   {200 "OK"
@@ -29,11 +27,12 @@
      :body file-contents}))
 
 (defn serve-partial-file [request]
-  (let [file-contents (read-partial-file (str "public/" (request :path)) ((request :headers) "Range"))]
+  (let [file-contents (read-partial-file
+                        (str "public/" (request :path)) ((request :headers) "Range"))]
     (file-response file-contents request 206)))
 
 (defn serve-entire-file [request]
-  (let [file-contents (read-entire-file (str "public/" (request :path)))]
+  (let [file-contents (read-file (str "public/" (request :path)))]
     (file-response file-contents request 200)))
 
 (defn serve-file [request]

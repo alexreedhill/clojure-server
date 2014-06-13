@@ -13,7 +13,7 @@
     (delete-file "resources/test-file.txt"))
 
   (it "writes to file and reads it"
-    (let [file-contents (bytes-to-string (read-entire-file "resources/test-file.txt"))]
+    (let [file-contents (bytes-to-string (read-file "resources/test-file.txt"))]
       (should= "test content" (trim file-contents))))
 
   (it "reads partial file contents"

@@ -9,7 +9,7 @@
     (Socket. address port))
 
 (defn request-response [request]
-  (with-open [socket (connect-socket 5000 "localhost")
+  (with-open [socket (connect-socket 6000 "localhost")
               out (writer socket)
               in (reader socket)]
     (.write out request)
@@ -21,7 +21,7 @@
 
 (describe "server"
   (before-all
-    (future (-main "5000" "localhost" test-router)))
+    (future (-main "6000" "localhost" test-router)))
 
   (it "reads line from client input and responds"
     (should=  "HTTP/1.1 200 OK" (request-response "GET / HTTP/1.1\r\n\n")))

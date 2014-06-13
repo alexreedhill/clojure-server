@@ -31,10 +31,6 @@
   `(let [handler-fn# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
      (generate-handler ~path ~response ~request-sym handler-fn# "OPTIONS")))
 
-(defmacro four-oh-four [body request-sym]
-  `(let [handler# (fn [~request-sym] (build ~request-sym {:code 404 :body ~body}))]
-     (fn [request#] (handler# request#))))
-
 (defn allowed-methods? [routes allowed]
   (and (= (count routes) 0) (> (count allowed) 0)))
 
@@ -47,7 +43,7 @@
      (cond
        (allowed-methods? routes# allowed#) (build ~request (method-not-allowed-response allowed#))
        (four-oh-four? routes#) (build ~request {:code 404 :body (last (last '~routes))})
-       (path-matches? ~request (second (first routes#))) (recur (rest routes#) (conj allowed# (str (first (first routes#)))))
+       (path-matches? ~request (second (first routes#))) (recur (rest routes#) (conj allowed# (first (first routes#))))
        :else (recur (rest routes#) allowed#))))
 
 (defn client-error? [routes]

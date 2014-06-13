@@ -24,7 +24,7 @@
       (try
         (println "Outgoing response: " (bytes-to-string response))
         (catch IllegalArgumentException e))
-      (.write out (bytes response) 0 (count response)))))
+      (.write out response 0 (count response)))))
 
 (def keep-going (atom true))
 
