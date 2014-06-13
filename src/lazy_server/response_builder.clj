@@ -1,6 +1,6 @@
 (ns lazy-server.response-builder
   (:require [lazy-server.file-interactor :refer [read-file read-partial-file write-to-file]]
-            [clojure.string :refer [join]]
+            [clojure.string :refer [join split]]
             [pantomime.mime :refer [mime-type-of]]))
 
 (def status-messages
@@ -27,8 +27,10 @@
      :body file-contents}))
 
 (defn serve-partial-file [request]
-  (let [file-contents (read-partial-file
-                        (str "public/" (request :path)) ((request :headers) "Range"))]
+  (let [range (second (split ((request :headers) "Range") #"="))
+        [min max] (map read-string (split range #"-"))
+        file-contents (read-partial-file
+                        (str "public/" (request :path)) min max)]
     (file-response file-contents request 206)))
 
 (defn serve-entire-file [request]

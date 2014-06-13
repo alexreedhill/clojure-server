@@ -5,17 +5,16 @@
 
 (defn read-file [file-path]
   (with-open [reader (input-stream file-path)]
-    (let [file (file file-path)
-          buffer (byte-array (.length file))]
-      (.read reader buffer 0 (.length file))
+    (let [length (.length (file file-path))
+          buffer (byte-array length)]
+      (.read reader buffer 0 length)
       buffer)))
 
-(defn read-partial-file [file-path range-header]
-  (let [range (second (split range-header #"="))
-        [min max] (map read-string (split range #"-"))
-        buffer (byte-array (- max min))]
+(defn read-partial-file [file-path min max]
+  (let [length (- max min)
+        buffer (byte-array length)]
     (with-open [reader (input-stream file-path)]
-      (.read reader buffer min (- max min))
+      (.read reader buffer min length)
       buffer)))
 
 (defn write-to-file [path content]

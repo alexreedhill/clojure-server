@@ -35,7 +35,7 @@
             (bytes-to-string (build request (serve-file request)))))))
 
     (it "builds partial content response"
-      (with-redefs [read-partial-file (fn [path range-header] "test")]
+      (with-redefs [read-partial-file (fn [path min max] "test")]
         (let [request {:path "/file1.txt" :headers {"Range" "bytes=0-4"}}]
           (should= "HTTP/1.1 206 Partial Content\r\nContent-Type: text/plain\r\n\ntest"
             (bytes-to-string (build request (serve-file request))))))))

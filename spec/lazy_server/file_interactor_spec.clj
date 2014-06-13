@@ -17,5 +17,5 @@
       (should= "test content" (trim file-contents))))
 
   (it "reads partial file contents"
-    (let [file-contents (bytes-to-string (read-partial-file "resources/test-file.txt" "bytes=0-4"))]
+    (let [file-contents (bytes-to-string (read-partial-file "resources/test-file.txt" 0 4))]
       (should= "test" (trim file-contents)))))
