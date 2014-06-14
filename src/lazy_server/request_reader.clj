@@ -9,7 +9,7 @@
     (apply str body)))
 
 (defn get-content-length [headers]
-  (read-string (get headers :content-length "0")))
+  (read-string (get headers "Content-Length" "0")))
 
 (defn read-until-body [in]
   (loop [request []]
@@ -19,9 +19,8 @@
 
 (defn read-request [client-socket]
   (let [in (reader client-socket)
-        status-and-headers (parse (read-until-body in))
-        content-length (get-content-length (status-and-headers :headers))]
+        request (parse (read-until-body in))
+        content-length (get-content-length (request :headers))]
     (if (> content-length 0)
-      (assoc status-and-headers
-             :body (read-body in content-length))
-      status-and-headers)))
+      (assoc request :body (read-body in content-length))
+      request)))

@@ -2,7 +2,6 @@
   (:require [clojure.string :refer [trim split blank?]]
             [clojure.java.io :refer [input-stream writer file]]))
 
-
 (defn read-file [file-path]
   (with-open [reader (input-stream file-path)]
     (let [length (.length (file file-path))
@@ -20,3 +19,9 @@
 (defn write-to-file [path content]
   (with-open [w (writer path)]
     (.write w content)))
+
+(defn log-request [request path]
+  (spit path (str
+               (request :method) " "
+               (request :path) " "
+               (request :http-version) "\n") :append true))
