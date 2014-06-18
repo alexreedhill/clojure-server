@@ -10,8 +10,8 @@
         (str (request :path) " response body"))
 
       (defrouter get-router request
-        (GET "/" {:code 200 :body (get-response-body request)})
-        (GET "/resource" {:code 200 :body (get-response-body request)})
+        (GET "/" {:code 200 :body (lazy-server.router-spec/get-response-body request)})
+        (GET "/resource" {:code 200 :body (lazy-server.router-spec/get-response-body request)})
         (not-found "Sorry, there's nothing here!")))
 
     (it "routes root request"

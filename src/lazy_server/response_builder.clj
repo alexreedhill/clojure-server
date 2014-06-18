@@ -1,6 +1,5 @@
 (ns lazy-server.response-builder
   (:require [lazy-server.file-interactor :refer [read-file read-partial-file write-to-file]]
-            [lazy-server.basic-authenticator :refer [basic-auth]]
             [clojure.string :refer [join split]]
             [pantomime.mime :refer [mime-type-of]]))
 

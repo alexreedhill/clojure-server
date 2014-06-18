@@ -1,5 +1,6 @@
 (ns lazy-server.router
-  (:require [lazy-server.response-builder :refer [build options-response method-not-allowed-response]]))
+  (:require [lazy-server.response-builder :refer :all]
+            [lazy-server.basic-authenticator :refer [basic-auth]]))
 
 (defn path-matches? [request path]
   (= path (request :path)))
@@ -49,11 +50,16 @@
 (defn client-error? [routes]
   (and (= (count routes) 1) (= (first (last routes)) 'not-found)))
 
+(defn local-eval [body]
+  (binding [*ns* (find-ns 'lazy-server.router)]
+    (eval body)))
+
 (defmacro defrouter [router-name request-sym & routes]
   `(defn ~router-name [request#]
      (loop [routes# '~routes]
        (let [route# (concat (first routes#) '(~request-sym))]
-         (cond
-           (client-error? routes#) (client-error request# ~request-sym ~routes)
-           (not (nil? ((eval route#) request#))) ((eval route#) request#)
-           :else (recur (rest routes#)))))))
+         (if (client-error? routes#)
+           (client-error request# ~request-sym ~routes)
+           (if-let [response# ((local-eval route#) request#)]
+             response#
+             (recur (rest routes#))))))))
