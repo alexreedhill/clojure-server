@@ -24,7 +24,11 @@
 
     (it "doesn't route unkown path"
       (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
-        (bytes-to-string (get-router {:method "GET" :path "/foobar"})))))
+        (bytes-to-string (get-router {:method "GET" :path "/foobar"}))))
+
+    (it "routes to public file by default if get request of same path"
+      (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents\n"
+        (bytes-to-string (get-router {:method "GET" :path "/file1.txt" :headers {}})))))
 
   (context "post"
     (before-all
@@ -98,16 +102,16 @@
       (it "doesn't match request with route if different path"
         (should= false (request-matches? {:path "/" :method "POST"} "/foobar" "POST")))))
 
-  (context "client-error?"
-    (it "determines client error is false when only one route is defined"
+  (context "not-found?"
+    (it "determines not found is false when only one route is defined"
       (let [routes '((GET "/" {:code 200}))]
-        (should= false (client-error? routes))))
+        (should= false (not-found? routes))))
 
-    (it "determines client error is false with more than one route left"
+    (it "determines not-found is false with more than one route left"
       (let [routes '((GET "/" {:code 200}) (POST "/" {:code 200}))]
-        (should= false (client-error? routes))))
+        (should= false (not-found? routes))))
 
-    (it "determines client error is true if only not found route is left"
+    (it "determines not-found is true if only not found route is left"
       (let [routes '((not-found "Sorry, there's nothing here!"))]
-        (should= true (client-error? routes))))))
+        (should= true (not-found? routes))))))
 

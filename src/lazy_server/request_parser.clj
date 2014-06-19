@@ -15,16 +15,16 @@
     (if header-string
       (parse-params header-string #"\n" #": "))))
 
-(defn parse-query-string [url]
-  (let [query-string (second (split url #"\?"))]
-    (if query-string
-      (parse-params query-string #"&" #"="))))
+(defn parse-query [query]
+  (if query
+    (parse-params query #"&" #"=")))
 
 (defn parse-status-line [raw-status-line]
-  (let [[method url version] (split raw-status-line #" ")]
+  (let [[method url version] (split raw-status-line #" ")
+        [path query] (split url #"\?")]
     {:method method
-     :path (first (split url #"\?"))
-     :query-params (parse-query-string url)
+     :path  path
+     :query-params (parse-query query)
      :http-version version}))
 
 (defn parse [status-and-headers]

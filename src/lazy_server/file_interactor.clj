@@ -1,18 +1,18 @@
 (ns lazy-server.file-interactor
   (:require [clojure.string :refer [trim split blank?]]
-            [clojure.java.io :refer [input-stream writer file]]))
+            [clojure.java.io :refer [input-stream writer as-file]]))
 
 (defn read-file [file-path]
   (with-open [reader (input-stream file-path)]
-    (let [length (.length (file file-path))
+    (let [length (.length (as-file file-path))
           buffer (byte-array length)]
       (.read reader buffer 0 length)
       buffer)))
 
 (defn read-partial-file [file-path min max]
-  (let [length (- max min)
-        buffer (byte-array length)]
-    (with-open [reader (input-stream file-path)]
+  (with-open [reader (input-stream file-path)]
+    (let [length (- max min)
+          buffer (byte-array length)]
       (.read reader buffer min length)
       buffer)))
 
@@ -28,3 +28,10 @@
                (request :method) " "
                (request :path) " "
                (request :http-version) "\n") :append true))
+
+(defn file-exists? [path]
+  (let [file (as-file path)]
+    (and
+      (.exists file)
+      (not (.isDirectory file)))))
+

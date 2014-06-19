@@ -26,10 +26,10 @@
     {:code 200}
     {:code 500}))
 
-(defn file-response [file-contents request code]
+(defn file-response [file-contents request success-code]
   (if (nil? file-contents)
     {:code 404}
-    {:code code
+    {:code success-code
      :headers {"Content-Type" (mime-type-of (request :path))}
      :body file-contents}))
 
