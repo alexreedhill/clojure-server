@@ -31,8 +31,8 @@
         (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents\n"
           (bytes-to-string (get-router {:method "GET" :path "/file1.txt"}))))
 
-      (it "doesn't route to public file if request method is not get"
-        (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
+      (it "returns method not allowed for public file if request method is not get"
+        (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\n\n"
           (bytes-to-string (get-router {:method "PUT" :path "/file1.txt"}))))))
 
   (context "post"

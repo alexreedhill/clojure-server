@@ -33,23 +33,26 @@
   `(let [response-fn# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
      (generate-handler ~path ~request-sym response-fn# "OPTIONS")))
 
-(defn four-oh-four? [routes]
-  (= (count routes) 0))
+(defn add-method-if-allowed [allowed routes request]
+  (cond
+    (path-matches? request (second (first routes)))
+    (conj allowed (str (first (first routes))))
+    (and (= (count routes) 1) (file-exists? (str "public/" (request :path))))
+    (conj allowed "GET")
+    :else allowed))
 
-(defn allowed-methods-found? [routes allowed]
-  (and (= (count routes) 0) (> (count allowed) 0)))
+(defmacro get-allowed-methods [request request-sym routes]
+  `(loop [routes# '~routes
+          allowed#     []]
+     (if (= (count routes#) 0)
+         (sort allowed#)
+         (recur (rest routes#) (add-method-if-allowed allowed# routes# ~request)))))
 
 (defmacro client-error [request request-sym routes]
-  `(loop [routes# '~routes
-         allowed#     []]
-    (cond
-      (allowed-methods-found? routes# allowed#)
-      (build ~request (method-not-allowed-response allowed#))
-      (four-oh-four? routes#)
-      (build ~request {:code 404 :body (last (last '~routes))})
-      (path-matches? ~request (second (first routes#)))
-      (recur (rest routes#) (conj allowed# (first (first routes#))))
-      :else (recur (rest routes#) allowed#))))
+  `(let [allowed# (get-allowed-methods ~request ~request-sym ~routes)]
+     (if (> (count allowed#) 0)
+       (build ~request (method-not-allowed-response allowed#))
+       (build ~request {:code 404 :body (last (last '~routes))}))))
 
 (defmacro not-found [request request-sym routes]
   `(let [file-path# (str "public/" (~request :path))]
