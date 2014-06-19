@@ -26,9 +26,14 @@
       (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
         (bytes-to-string (get-router {:method "GET" :path "/foobar"}))))
 
-    (it "routes to public file by default if get request of same path"
-      (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents\n"
-        (bytes-to-string (get-router {:method "GET" :path "/file1.txt" :headers {}})))))
+    (context "public file"
+      (it "routes to public file by default if get request of same path"
+        (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents\n"
+          (bytes-to-string (get-router {:method "GET" :path "/file1.txt"}))))
+
+      (it "doesn't route to public file if request method is not get"
+        (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
+          (bytes-to-string (get-router {:method "PUT" :path "/file1.txt"}))))))
 
   (context "post"
     (before-all

@@ -46,6 +46,12 @@
       (with-redefs [read-partial-file (fn [path min max] "test")]
         (let [request {:path "/file1.txt" :headers {"Range" "bytes=0-4"}}]
           (should= "HTTP/1.1 206 Partial Content\r\nContent-Type: text/plain\r\n\ntest"
+            (bytes-to-string (build request (serve-file request)))))))
+
+    (it "doesn't require a request to have headers in order to serve file"
+      (with-redefs [read-file (fn [path] "file1 contents")]
+        (let [request {:path "/file1.txt"}]
+          (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
             (bytes-to-string (build request (serve-file request))))))))
 
   (it "builds method not allowed response"

@@ -53,7 +53,7 @@
 
 (defmacro not-found [request request-sym routes]
   `(let [file-path# (str "public/" (~request :path))]
-     (if (file-exists? file-path#)
+     (if (and (file-exists? file-path#) (= (~request :method) "GET"))
        ((GET (~request :path) (serve-file ~request) ~request-sym) ~request)
        (client-error ~request ~request-sym ~routes))))
 

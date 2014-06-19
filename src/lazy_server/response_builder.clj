@@ -44,7 +44,7 @@
     (file-response file-contents request 200)))
 
 (defn serve-file [request]
-  (if ((request :headers) "Range")
+  (if (and (request :headers) ((request :headers) "Range"))
     (serve-partial-file request)
     (serve-entire-file request)))
 
