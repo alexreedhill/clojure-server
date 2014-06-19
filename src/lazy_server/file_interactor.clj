@@ -17,8 +17,11 @@
       buffer)))
 
 (defn write-to-file [path content]
-  (with-open [w (writer path)]
-    (.write w content)))
+  (try
+    (with-open [w (writer path)]
+      (.write w content))
+    true
+    (catch Exception e false)))
 
 (defn log-request [request path]
   (spit path (str

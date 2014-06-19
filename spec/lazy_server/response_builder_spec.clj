@@ -1,6 +1,6 @@
 (ns lazy-server.response-builder-spec
   (:require [lazy-server.response-builder :refer :all]
-            [lazy-server.file-interactor :refer [read-file read-partial-file]]
+            [lazy-server.file-interactor :refer [read-file read-partial-file write-to-file]]
             [lazy-server.spec-helper :refer [bytes-to-string]]
             [speclj.core :refer :all]))
 
@@ -25,6 +25,10 @@
     (should= "HTTP/1.1 401 Unauthorized\r\n\n"
       (bytes-to-string (build {:path "/restricted"} {:code 401}))))
 
+  (it "builds internal server error response"
+    (should= "HTTP/1.1 500 Internal Server Error\r\n\n"
+      (bytes-to-string (build {:path "/error"} {:code 500}))))
+
   (context "serve file"
     (it "builds sucessful file contents response"
       (with-redefs [read-file (fn [path] "file1 contents")]
@@ -46,5 +50,16 @@
 
   (it "builds method not allowed response"
     (should= {:code 405 :headers {"Allow" "GET,POST"}}
-      (method-not-allowed-response ['GET 'POST]))))
+      (method-not-allowed-response ['GET 'POST])))
+
+  (context "save resource"
+    (it "returns successful response"
+      (with-redefs [write-to-file (fn [path contents] true)]
+        (should= {:code 200}
+          (save-resource {:path "/form" :body "data = cosby"}))))
+
+    (it "returns unsuccessful response"
+      (with-redefs [write-to-file (fn [path contents] false)]
+        (should= {:code 500}
+          (save-resource {:path "/form" :body "data = heathcliff"}))))))
 

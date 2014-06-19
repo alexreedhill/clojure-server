@@ -9,7 +9,8 @@
    301 "Moved Permanently"
    401 "Unauthorized"
    404 "Not Found"
-   405 "Method Not Allowed"})
+   405 "Method Not Allowed"
+   500 "Internal Server Error"})
 
 (defn redirect [path]
   {:code 301 :headers {"Location" path}})
@@ -19,6 +20,11 @@
 
 (defn method-not-allowed-response [allowed]
   {:code 405 :headers {"Allow" (join "," allowed)}})
+
+(defn save-resource [request]
+  (if-let [file-saved (write-to-file (str "public/" (request :path)) (request :body))]
+    {:code 200}
+    {:code 500}))
 
 (defn file-response [file-contents request code]
   (if (nil? file-contents)
