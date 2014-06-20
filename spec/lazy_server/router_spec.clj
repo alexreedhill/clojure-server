@@ -96,9 +96,9 @@
                           :path "/patch-content.txt"
                           :headers {"If-Match" @sha1-default}
                           :body "patched content"})
-      (should= "patched content"
+      (should= "patched content\n"
         (bytes-to-string (read-file "public/patch-content.txt")))
-      (write-to-file "public/patch-content.txt" "default content\n")))
+      (write-to-file "public/patch-content.txt" "default content")))
 
   (context "save resource"
     (it "success"

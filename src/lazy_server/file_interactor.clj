@@ -1,6 +1,6 @@
 (ns lazy-server.file-interactor
   (:require [clojure.string :refer [trim split blank?]]
-            [clojure.java.io :refer [input-stream writer as-file]]))
+            [clojure.java.io :refer [output-stream input-stream as-file]]))
 
 (defn read-file [file-path]
   (with-open [reader (input-stream file-path)]
@@ -18,10 +18,12 @@
 
 (defn write-to-file [path content]
   (try
-    (with-open [w (writer path)]
-      (.write w content))
+    (with-open [w (output-stream path)]
+      (let [content-newline (byte-array (mapcat seq [(.getBytes content) (.getBytes "\n")]))]
+        (.write w content-newline)))
     true
-    (catch Exception e false)))
+    (catch Exception e
+      (do (println e) false))))
 
 (defn log-request [request path]
   (spit path (str
