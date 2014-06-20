@@ -70,7 +70,9 @@
   `(fn [~request-sym]
      (let [file-contents# (read-file (str "public/" (~request-sym :path)))]
        (if (if-match-header-matches? ~request-sym file-contents#)
-         (build ~request-sym {:code 204 :headers {"Etag" (sha1 (~request-sym :body))}})
+         (do
+           (~response :body)
+           (build ~request-sym {:code 204 :headers {"Etag" (sha1 (~request-sym :body))}}))
          (build ~request-sym {:code 412 :headers {"Etag" (sha1 file-contents#)}})))))
 
 (defmacro PATCH [path response request-sym]

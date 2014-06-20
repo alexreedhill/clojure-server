@@ -71,7 +71,7 @@
 
     (before-all
       (defrouter patch-router request
-        (PATCH "/patch-content.txt" (save-resource request))))
+        (PATCH "/patch-content.txt" {:code 204})))
 
     (it "routes patch request with correct if-match etag"
       (should= (str "HTTP/1.1 204 No Content\r\nEtag: " @sha1-patched "\r\n\n")
@@ -87,7 +87,18 @@
                            {:method "PATCH"
                             :headers {"If-Match" "incorrect etag"}
                             :path "/patch-content.txt"
-                            :body "patched content"})))))
+                            :body "patched content"}))))
+
+    (it "calls patch response body on successful patch"
+      (defrouter patch-save-router request
+        (PATCH "/patch-content.txt" (save-resource request)))
+      (patch-save-router {:method "PATCH"
+                          :path "/patch-content.txt"
+                          :headers {"If-Match" @sha1-default}
+                          :body "patched content"})
+      (should= "patched content"
+        (bytes-to-string (read-file "public/patch-content.txt")))
+      (write-to-file "public/patch-content.txt" "default content\n")))
 
   (context "save resource"
     (it "success"
