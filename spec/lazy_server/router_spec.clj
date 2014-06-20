@@ -1,6 +1,8 @@
 (ns lazy-server.router-spec
   (:require [lazy-server.router :refer :all]
+            [lazy-server.file-interactor :refer [read-file]]
             [lazy-server.spec-helper :refer [bytes-to-string]]
+            [digest :refer [sha1]]
             [speclj.core :refer :all]))
 
 (describe "router"
@@ -60,7 +62,31 @@
 
     (it "routes put request"
       (should= "HTTP/1.1 200 OK\r\n\n"
-        (bytes-to-string (put-router {:method "PUT" :path "/form"})))))
+        (bytes-to-string (put-router {:method "PUT" :path "/form" :body "foo"})))))
+
+  (context "patch"
+    (with sha1-default (sha1 "default content\n"))
+    (with sha1-patched (sha1 "patched content"))
+
+    (before-all
+      (defrouter patch-router request
+        (PATCH "/patch-content.txt" (save-resource request))))
+
+    (it "routes patch request with correct if-match etag"
+      (should= (str "HTTP/1.1 204 No Content\r\nEtag: " @sha1-patched "\r\n\n")
+        (bytes-to-string (patch-router
+                           {:method "PATCH"
+                            :headers {"If-Match" @sha1-default}
+                            :path "/patch-content.txt"
+                            :body "patched content"}))))
+
+    (it "routes patch request with incorrect if-match etag"
+      (should= (str "HTTP/1.1 412 Precondition Failed\r\nEtag: " @sha1-default "\r\n\n")
+        (bytes-to-string (patch-router
+                           {:method "PATCH"
+                            :headers {"If-Match" "incorrect etag"}
+                            :path "/patch-content.txt"
+                            :body "patched content"})))))
 
   (context "method not allowed"
     (it "returns response"
@@ -105,7 +131,22 @@
         (should= false (request-matches? {:path "/" :method "POST"} "/" "PUT")))
 
       (it "doesn't match request with route if different path"
-        (should= false (request-matches? {:path "/" :method "POST"} "/foobar" "POST")))))
+        (should= false (request-matches? {:path "/" :method "POST"} "/foobar" "POST"))))
+
+    (context "if-match"
+      (with sha1-default (sha1 "default content"))
+
+      (it "matches if match header to resource"
+          (should= true
+            (if-match-header-matches? {:path "/patch-content.txt"
+                                       :headers {"If-Match" @sha1-default}}
+                                      "default content")))
+
+      (it "doesn't match incorrect if match header"
+          (should= false
+            (if-match-header-matches? {:path "/patch-content.txt"
+                                       :headers {"If-Match" "foo"}}
+                                      "default content")))))
 
   (context "not-found?"
     (it "determines not found is false when only one route is defined"

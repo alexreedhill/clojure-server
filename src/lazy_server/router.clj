@@ -1,7 +1,8 @@
 (ns lazy-server.router
   (:require [lazy-server.response-builder :refer :all]
             [lazy-server.basic-authenticator :refer [basic-auth]]
-            [lazy-server.file-interactor :refer [file-exists?]]))
+            [lazy-server.file-interactor :refer [file-exists? read-file]]
+            [digest :refer [sha1]]))
 
 (defn path-matches? [request path]
   (= path (request :path)))
@@ -28,6 +29,20 @@
 (defmacro PUT [path response request-sym]
   `(let [response-fn# (fn [~request-sym] (build ~request-sym ~response))]
      (generate-handler ~path ~request-sym response-fn# "PUT")))
+
+(defn if-match-header-matches? [request file-contents]
+  (= (sha1 file-contents) ((request :headers) "If-Match")))
+
+(defmacro gen-patch-response-fn [request-sym response]
+  `(fn [~request-sym]
+     (let [file-contents# (read-file (str "public/" (~request-sym :path)))]
+       (if (if-match-header-matches? ~request-sym file-contents#)
+         (build ~request-sym {:code 204 :headers {"Etag" (sha1 (~request-sym :body))}})
+         (build ~request-sym {:code 412 :headers {"Etag" (sha1 file-contents#)}})))))
+
+(defmacro PATCH [path response request-sym]
+  `(let [response-fn# (gen-patch-response-fn ~request-sym ~response)]
+     (generate-handler ~path ~request-sym response-fn# "PATCH")))
 
 (defmacro OPTIONS [path response request-sym]
   `(let [response-fn# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
@@ -61,7 +76,8 @@
        (client-error ~request ~request-sym ~routes))))
 
 (defn not-found? [routes]
-  (and (= (count routes) 1) (= (first (last routes)) 'not-found)))
+  (or (= (count routes) 0)
+    (and (= (count routes) 1) (= (first (last routes)) 'not-found))))
 
 (defn local-eval [body]
   (binding [*ns* (find-ns 'lazy-server.router)]

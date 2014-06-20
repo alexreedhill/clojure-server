@@ -8,5 +8,6 @@
   :test-paths ["spec"]
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [com.novemberain/pantomime "2.2.0"]
-                 [org.clojure/data.codec "0.1.0"]]
+                 [org.clojure/data.codec "0.1.0"]
+                 [digest "1.4.4"]]
   :main lazy-server.server)

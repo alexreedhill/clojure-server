@@ -5,26 +5,28 @@
 
 (def status-messages
   {200 "OK"
+   204 "No Content"
    206 "Partial Content"
    301 "Moved Permanently"
    401 "Unauthorized"
    404 "Not Found"
    405 "Method Not Allowed"
+   412 "Precondition Failed"
    500 "Internal Server Error"})
 
 (defn redirect [path]
   {:code 301 :headers {"Location" path}})
+
+(defn save-resource [request]
+  (if-let [file-saved (write-to-file (str "public/" (request :path)) (request :body))]
+    {:code 200}
+    {:code 500}))
 
 (defn options-response [response]
   (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
 
 (defn method-not-allowed-response [allowed]
   {:code 405 :headers {"Allow" (join "," allowed)}})
-
-(defn save-resource [request]
-  (if-let [file-saved (write-to-file (str "public/" (request :path)) (request :body))]
-    {:code 200}
-    {:code 500}))
 
 (defn file-response [file-contents request success-code]
   (if (nil? file-contents)
