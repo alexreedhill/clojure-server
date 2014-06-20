@@ -1,6 +1,7 @@
 (ns lazy-server.router-spec
   (:require [lazy-server.router :refer :all]
-            [lazy-server.file-interactor :refer [read-file]]
+            [lazy-server.response-builder :refer [build]]
+            [lazy-server.file-interactor :refer [read-file read-partial-file write-to-file]]
             [lazy-server.spec-helper :refer [bytes-to-string]]
             [digest :refer [sha1]]
             [speclj.core :refer :all]))
@@ -87,6 +88,42 @@
                             :headers {"If-Match" "incorrect etag"}
                             :path "/patch-content.txt"
                             :body "patched content"})))))
+
+  (context "save resource"
+    (it "success"
+      (with-redefs [write-to-file (fn [path contents] true)]
+        (should= {:code 200}
+          (save-resource {:path "/form" :body "data = cosby"}))))
+
+    (it "fail"
+      (with-redefs [write-to-file (fn [path contents] false)]
+        (should= {:code 500}
+          (save-resource {:path "/form" :body "data = heathcliff"})))))
+
+  (context "serve file"
+    (it "builds sucessful file contents response"
+      (with-redefs [read-file (fn [path] "file1 contents")]
+        (let [request {:path "/file1.txt" :headers {}}]
+          (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
+            (bytes-to-string (build request (serve-file request)))))))
+
+    (it "builds unsucessful file contents response"
+      (with-redefs [read-file (fn [path] nil)]
+        (let [request {:path "/file1.txt" :headers {}}]
+          (should= "HTTP/1.1 404 Not Found\r\n\n"
+            (bytes-to-string (build request (serve-file request)))))))
+
+    (it "builds partial content response"
+      (with-redefs [read-partial-file (fn [path min max] "test")]
+        (let [request {:path "/file1.txt" :headers {"Range" "bytes=0-4"}}]
+          (should= "HTTP/1.1 206 Partial Content\r\nContent-Type: text/plain\r\n\ntest"
+            (bytes-to-string (build request (serve-file request)))))))
+
+    (it "doesn't require a request to have headers in order to serve file"
+      (with-redefs [read-file (fn [path] "file1 contents")]
+        (let [request {:path "/file1.txt"}]
+          (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
+            (bytes-to-string (build request (serve-file request))))))))
 
   (context "method not allowed"
     (it "returns response"

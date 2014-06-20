@@ -1,7 +1,10 @@
 (ns lazy-server.router
-  (:require [lazy-server.response-builder :refer :all]
+  (:require [lazy-server.response-builder :refer [build]]
             [lazy-server.basic-authenticator :refer [basic-auth]]
-            [lazy-server.file-interactor :refer [file-exists? read-file]]
+            [lazy-server.file-interactor :refer [file-exists? read-file write-to-file
+                                                 read-partial-file]]
+            [clojure.string :refer [join split]]
+            [pantomime.mime :refer [mime-type-of]]
             [digest :refer [sha1]]))
 
 (defn path-matches? [request path]
@@ -12,6 +15,36 @@
 
 (defn request-matches? [request path method]
   (and (method-matches? request method) (path-matches? request path)))
+
+(defn redirect [path]
+  {:code 301 :headers {"Location" path}})
+
+(defn save-resource [request]
+  (if-let [file-saved (write-to-file (str "public/" (request :path)) (request :body))]
+    {:code 200}
+    {:code 500}))
+
+(defn file-response [file-contents request success-code]
+  (if (nil? file-contents)
+    {:code 404}
+    {:code success-code
+     :headers {"Content-Type" (mime-type-of (request :path))}
+     :body file-contents}))
+
+(defn serve-partial-file [request]
+  (let [range (second (split ((request :headers) "Range") #"="))
+        [min max] (map read-string (split range #"-"))
+        file-contents (read-partial-file (str "public/" (request :path)) min max)]
+    (file-response file-contents request 206)))
+
+(defn serve-entire-file [request]
+  (let [file-contents (read-file (str "public/" (request :path)))]
+    (file-response file-contents request 200)))
+
+(defn serve-file [request]
+  (if (and (request :headers) ((request :headers) "Range"))
+    (serve-partial-file request)
+    (serve-entire-file request)))
 
 (defmacro generate-handler [path request-sym response-fn method]
   `(fn [request#]
@@ -44,9 +77,15 @@
   `(let [response-fn# (gen-patch-response-fn ~request-sym ~response)]
      (generate-handler ~path ~request-sym response-fn# "PATCH")))
 
+(defn options-response [response]
+  (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
+
 (defmacro OPTIONS [path response request-sym]
   `(let [response-fn# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
      (generate-handler ~path ~request-sym response-fn# "OPTIONS")))
+
+(defn method-not-allowed-response [allowed]
+  {:code 405 :headers {"Allow" (join "," allowed)}})
 
 (defn add-method-if-allowed [allowed routes request]
   (cond
