@@ -39,3 +39,6 @@
     (and
       (.exists file)
       (not (.isDirectory file)))))
+
+(defn directory-contents [path]
+  (drop 1 (map #(.getName %) (file-seq (as-file path)))))

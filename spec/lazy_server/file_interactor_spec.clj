@@ -59,5 +59,9 @@
 
     (it "recognizes file doesn't exists if path points to directory"
       (should= false
-        (file-exists? "public/")))))
+        (file-exists? "public/"))))
+
+  (it "gets directory contents"
+    (write-to-file "public/test.txt" "test")
+    (should= '("test.txt") (directory-contents "public/"))))
 
