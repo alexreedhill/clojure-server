@@ -1,8 +1,9 @@
 (ns lazy-server.router-spec
   (:require [lazy-server.router :refer :all]
             [lazy-server.response-builder :refer [build]]
-            [lazy-server.file-interactor :refer [read-file read-partial-file write-to-file]]
+            [lazy-server.file-interactor :refer :all]
             [lazy-server.spec-helper :refer [bytes-to-string]]
+            [clojure.java.io :refer [delete-file]]
             [digest :refer [sha1]]
             [speclj.core :refer :all]))
 
@@ -31,12 +32,15 @@
 
     (context "public file"
       (it "routes to public file by default if get request of same path"
-        (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents\n"
-          (bytes-to-string (get-router {:method "GET" :path "/file1.txt"}))))
+        (with-redefs [file-exists? (fn [_] true)
+                      read-file (fn [_] (.getBytes "file1 contents\n"))]
+          (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents\n"
+            (bytes-to-string (get-router {:method "GET" :path "/file1.txt"})))))
 
       (it "returns method not allowed for public file if request method is not get"
-        (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\n\n"
-          (bytes-to-string (get-router {:method "PUT" :path "/file1.txt"}))))))
+        (with-redefs [file-exists? (fn [_] true)]
+          (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\n\n"
+            (bytes-to-string (get-router {:method "PUT" :path "/file1.txt"})))))))
 
   (context "post"
     (before-all
@@ -70,68 +74,72 @@
     (with sha1-patched (sha1 "patched content"))
 
     (before-all
+      (write-to-file "public/patch-content.txt" "default content")
       (defrouter patch-router request
         (PATCH "/patch-content.txt" {:code 204})))
 
     (it "routes patch request with correct if-match etag"
-      (should= (str "HTTP/1.1 204 No Content\r\nEtag: " @sha1-patched "\r\n\n")
-        (bytes-to-string (patch-router
-                           {:method "PATCH"
-                            :headers {"If-Match" @sha1-default}
-                            :path "/patch-content.txt"
-                            :body "patched content"}))))
+      (with-redefs [read-file (fn [_] "default content\n")]
+        (should= (str "HTTP/1.1 204 No Content\r\nEtag: " @sha1-patched "\r\n\n")
+          (bytes-to-string (patch-router
+                             {:method "PATCH"
+                              :headers {"If-Match" @sha1-default}
+                              :path "/patch-content.txt"
+                              :body "patched content"})))))
 
     (it "routes patch request with incorrect if-match etag"
+      (with-redefs [read-file (fn [_] "default content\n")]
       (should= (str "HTTP/1.1 412 Precondition Failed\r\nEtag: " @sha1-default "\r\n\n")
         (bytes-to-string (patch-router
                            {:method "PATCH"
                             :headers {"If-Match" "incorrect etag"}
                             :path "/patch-content.txt"
-                            :body "patched content"}))))
+                            :body "patched content"})))))
 
     (it "calls patch response body on successful patch"
       (defrouter patch-save-router request
         (PATCH "/patch-content.txt" (save-resource request)))
+      (write-to-file "public/patch-content.txt" "default content")
       (patch-save-router {:method "PATCH"
                           :path "/patch-content.txt"
                           :headers {"If-Match" @sha1-default}
                           :body "patched content"})
       (should= "patched content\n"
         (bytes-to-string (read-file "public/patch-content.txt")))
-      (write-to-file "public/patch-content.txt" "default content")))
+      (delete-file "public/patch-content.txt")))
 
   (context "save resource"
     (it "success"
-      (with-redefs [write-to-file (fn [path contents] true)]
+      (with-redefs [write-to-file (fn [_ _] true)]
         (should= {:code 200}
           (save-resource {:path "/form" :body "data = cosby"}))))
 
     (it "fail"
-      (with-redefs [write-to-file (fn [path contents] false)]
+      (with-redefs [write-to-file (fn [_ _] false)]
         (should= {:code 500}
           (save-resource {:path "/form" :body "data = heathcliff"})))))
 
   (context "serve file"
     (it "builds sucessful file contents response"
-      (with-redefs [read-file (fn [path] "file1 contents")]
+      (with-redefs [read-file (fn [_] "file1 contents")]
         (let [request {:path "/file1.txt" :headers {}}]
           (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
             (bytes-to-string (build request (serve-file request)))))))
 
     (it "builds unsucessful file contents response"
-      (with-redefs [read-file (fn [path] nil)]
+      (with-redefs [read-file (fn [_] nil)]
         (let [request {:path "/file1.txt" :headers {}}]
           (should= "HTTP/1.1 404 Not Found\r\n\n"
             (bytes-to-string (build request (serve-file request)))))))
 
     (it "builds partial content response"
-      (with-redefs [read-partial-file (fn [path min max] "test")]
+      (with-redefs [read-partial-file (fn [_ _ _] "test")]
         (let [request {:path "/file1.txt" :headers {"Range" "bytes=0-4"}}]
           (should= "HTTP/1.1 206 Partial Content\r\nContent-Type: text/plain\r\n\ntest"
             (bytes-to-string (build request (serve-file request)))))))
 
     (it "doesn't require a request to have headers in order to serve file"
-      (with-redefs [read-file (fn [path] "file1 contents")]
+      (with-redefs [read-file (fn [_] "file1 contents")]
         (let [request {:path "/file1.txt"}]
           (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
             (bytes-to-string (build request (serve-file request))))))))
