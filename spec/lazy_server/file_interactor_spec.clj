@@ -63,5 +63,6 @@
 
   (it "gets directory contents"
     (write-to-file "public/test.txt" "test")
-    (should= '("test.txt") (directory-contents "public/"))))
+    (should= '("test.txt") (directory-contents "public/"))
+    (delete-file "public/test.txt")))
 

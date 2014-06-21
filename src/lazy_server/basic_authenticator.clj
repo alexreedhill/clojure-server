@@ -5,7 +5,9 @@
 (defn decode-client-creds [request]
   (let [auth-header (get (request :headers) "Authorization")]
     (if auth-header
-      (base64/decode (.getBytes (second (split auth-header #" ")))))))
+      (-> (second (split auth-header #" "))
+          (.getBytes)
+          (base64/decode)))))
 
 (defn basic-auth [request fail-body success-body creds]
   (let [client-creds (decode-client-creds request)]

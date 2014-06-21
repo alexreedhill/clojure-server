@@ -1,4 +1,5 @@
-(ns lazy-server.response-builder)
+(ns lazy-server.response-builder
+  (:require [clojure.string :refer [trim-newline]]))
 
 (def status-messages
   {200 "OK"
@@ -12,25 +13,20 @@
    500 "Internal Server Error"})
 
 (defn build-status-line [response]
-  (str "HTTP/1.1 "
-       (response :code) " "
-       (status-messages (response :code))))
-
-(defn build-header-string [headers]
-  (let [header-string (str (first (first headers)) ": "
-                           (second (first headers)))]
-    (if (< 1 (count headers))
-      (str header-string "\n")
-      header-string)))
+  (.getBytes
+    (str "HTTP/1.1 "
+         (response :code) " "
+         (status-messages (response :code)))))
 
 (defn build-headers [response]
-  (if (> (count (response :headers)) 0)
-    (loop [headers (response :headers)
-           output               "\r\n"]
-      (if (= (count headers) 0)
-        output
-        (recur (rest headers)
-               (str output (build-header-string headers)))))))
+  (let [headers (response :headers)]
+    (if (> (count headers) 0)
+      (->> headers
+           (map #(str (key %) ": " (val %) "\n"))
+           (apply str)
+           (trim-newline)
+           (str "\r\n")
+           (.getBytes)))))
 
 (defn build-body [response]
   (try
@@ -39,10 +35,9 @@
     (catch NullPointerException e (byte-array 0))))
 
 (defn build [request response]
-  (byte-array
-    (mapcat seq
-            [(.getBytes
-               (str
-                 (build-status-line response)
-                 (build-headers response) "\r\n\n"))
-            (build-body response)])))
+  (let [status-line (build-status-line response)
+        headers (build-headers response)
+        body (build-body response)]
+    (->> [status-line headers (.getBytes "\r\n\n") body]
+         (mapcat seq)
+         (byte-array))))

@@ -17,7 +17,9 @@
       buffer)))
 
 (defn append-newline [content]
-  (byte-array (mapcat seq [(.getBytes content) (.getBytes "\n")])))
+  (->> [content "\n"]
+       (mapcat #(seq (.getBytes %)))
+       (byte-array)))
 
 (defn write-to-file [path content]
   (try
@@ -41,4 +43,6 @@
       (not (.isDirectory file)))))
 
 (defn directory-contents [path]
-  (drop 1 (map #(.getName %) (file-seq (as-file path)))))
+  (->> (file-seq (as-file path))
+       (map #(.getName %))
+       (drop 1)))
