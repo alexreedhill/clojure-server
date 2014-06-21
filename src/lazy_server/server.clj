@@ -1,9 +1,7 @@
 (ns lazy-server.server
   (:require [lazy-server.request-reader :refer [read-request]]
-            [lazy-server.router :refer :all]
             [lazy-server.file-interactor :refer [log-request]]
-            [lazy-server.spec-helper :refer [bytes-to-string]]
-            [clojure.java.io :refer [output-stream]])
+            [lazy-server.spec-helper :refer [bytes-to-string]])
   (:import (java.net Socket ServerSocket InetAddress)
            (java.io OutputStream BufferedOutputStream DataOutputStream))
   (:gen-class :main true))
@@ -32,9 +30,10 @@
 (defn -main [& args]
   (with-open [server-socket (open-server-socket (first args) (second args))]
     (println "Lazy server listening...")
+    (intern 'lazy-server.router 'public-dir (nth args 3))
     (while @keep-going
       (let [client-socket (listen server-socket)
             request (read-request client-socket)]
-        (log-request request "public/log.txt")
+        (log-request request (str (nth args 3) "log.txt"))
         (write-response request (nth args 2) client-socket))))
   (println "Lazy server stopping..."))

@@ -1,6 +1,6 @@
 (ns lazy-server.server-spec
   (:require [lazy-server.server :refer :all]
-            [lazy-server.router :refer [defrouter GET]]
+            [lazy-server.router :refer [defrouter GET public-dir]]
             [clojure.java.io :refer [reader writer delete-file]]
             [speclj.core :refer :all])
   (:import (java.net Socket ConnectException)))
@@ -21,7 +21,7 @@
 
 (describe "server"
   (before-all
-    (future (-main "6000" "localhost" test-router)))
+    (future (-main "6000" "localhost" test-router "public/")))
 
   (after-all
     (delete-file "public/log.txt"))
@@ -41,5 +41,8 @@
 
   (it "reads request with body"
     (should= "HTTP/1.1 200 OK"
-      (request-response "GET / HTTP/1.1\r\nContent-Length: 3\r\n\nFoo"))))
+      (request-response "GET / HTTP/1.1\r\nContent-Length: 3\r\n\nFoo")))
+
+  (it "sets public directory"
+    (should= "public/" public-dir)))
 
