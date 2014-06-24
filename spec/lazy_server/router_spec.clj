@@ -89,14 +89,14 @@
 
     (it "routes patch request with incorrect if-match etag"
       (with-redefs [read-file (fn [_] "default content\n")]
-      (should= (str "HTTP/1.1 412 Precondition Failed\r\nEtag: " @sha1-default "\r\n\n")
-        (bytes-to-string (patch-router
+        (should= (str "HTTP/1.1 412 Precondition Failed\r\nEtag: " @sha1-default "\r\n\n")
+          (bytes-to-string (patch-router
                            {:method "PATCH"
                             :headers {"If-Match" "incorrect etag"}
                             :path "/patch-content.txt"
                             :body "patched content"})))))
 
-    (it "calls patch response body on successful patch"
+    (it "calls patch response function on successful patch"
       (defrouter patch-save-router request
         (PATCH "/patch-content.txt" (save-resource request)))
       (write-to-file "public/patch-content.txt" "default content")
@@ -114,38 +114,42 @@
         (should= {:code 200}
           (save-resource {:path "/form" :body "data = cosby"}))))
 
-    (it "fail"
+    (it "failure"
       (with-redefs [write-to-file (fn [_ _] false)]
         (should= {:code 500}
           (save-resource {:path "/form" :body "data = heathcliff"})))))
 
   (context "serve file"
-    (it "builds sucessful file contents response"
+    (before-all
+      (defrouter serve-router request
+        (GET "/file1.txt" (serve-file request))))
+
+    (it "serves file successfully"
       (with-redefs [read-file (fn [_] "file1 contents")]
-        (let [request {:path "/file1.txt" :headers {}}]
+        (let [request {:path "/file1.txt" :method "GET" :headers {}}]
           (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
-            (bytes-to-string (build request (serve-file request)))))))
+            (bytes-to-string (serve-router request))))))
 
-    (it "builds unsucessful file contents response"
-      (with-redefs [read-file (fn [_] nil)]
-        (let [request {:path "/file1.txt" :headers {}}]
-          (should= "HTTP/1.1 404 Not Found\r\n\n"
-            (bytes-to-string (build request (serve-file request)))))))
-
-    (it "builds partial content response"
+    (it "serves partial content"
       (with-redefs [read-partial-file (fn [_ _ _] "test")]
-        (let [request {:path "/file1.txt" :headers {"Range" "bytes=0-4"}}]
+        (let [request {:method "GET" :path "/file1.txt" :headers {"Range" "bytes=0-4"}}]
           (should= "HTTP/1.1 206 Partial Content\r\nContent-Type: text/plain\r\n\ntest"
-            (bytes-to-string (build request (serve-file request)))))))
+            (bytes-to-string (serve-router request))))))
+
+    (it "fails to serve a file"
+      (with-redefs [read-file (fn [_] nil)]
+        (let [request {:method "GET" :path "/file1.txt" :headers {}}]
+          (should= "HTTP/1.1 404 Not Found\r\n\n"
+            (bytes-to-string (serve-router request))))))
 
     (it "doesn't require a request to have headers in order to serve file"
       (with-redefs [read-file (fn [_] "file1 contents")]
-        (let [request {:path "/file1.txt"}]
+        (let [request {:method "GET" :path "/file1.txt"}]
           (should= "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\nfile1 contents"
-            (bytes-to-string (build request (serve-file request))))))))
+            (bytes-to-string (serve-router request)))))))
 
   (context "method not allowed"
-    (it "returns response"
+    (it "client error routes method not allowed"
       (should= "HTTP/1.1 405 Method Not Allowed\r\nAllow: GET\r\n\n"
         (bytes-to-string (client-error {:method "POST" :path "/"} request ((GET "/" {:code 200}))))))
 

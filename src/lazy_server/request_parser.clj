@@ -1,6 +1,6 @@
 (ns lazy-server.request-parser
   (:require [lazy-server.parameter-decoder :refer [decode]]
-            [clojure.string :refer [split join lower-case]]))
+            [clojure.string :refer [split join]]))
 
 (defn parse-params [params outer-delimiter inner-delimiter]
   (reduce
@@ -11,9 +11,8 @@
     (split params outer-delimiter)))
 
 (defn parse-headers [headers]
-  (let [header-string (join "\n" headers)]
-    (if header-string
-      (parse-params header-string #"\n" #": "))))
+  (if-let [header-string (join "\n" headers)]
+    (parse-params header-string #"\n" #": ")))
 
 (defn parse-query [query]
   (if query

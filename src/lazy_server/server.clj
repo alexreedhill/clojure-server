@@ -36,4 +36,4 @@
             request (read-request client-socket)]
         (log-request request (str (nth args 3) "log.txt"))
         (write-response request (nth args 2) client-socket))))
-  (println "Lazy server stopping..."))
+(println "Lazy server stopping..."))

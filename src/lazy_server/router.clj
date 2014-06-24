@@ -1,8 +1,8 @@
 (ns lazy-server.router
   (:require [lazy-server.response-builder :refer [build]]
-            [lazy-server.basic-authenticator :refer [basic-auth]]
             [lazy-server.file-interactor :refer [file-exists? read-file write-to-file
                                                  read-partial-file]]
+            [lazy-server.basic-authenticator :refer [authenticate]]
             [clojure.string :refer [join split]]
             [pantomime.mime :refer [mime-type-of]]
             [digest :refer [sha1]]))
@@ -34,7 +34,9 @@
      :body file-contents}))
 
 (defn serve-partial-file [request]
-  (let [range (second (split ((request :headers) "Range") #"="))
+  (let [range (-> ((request :headers) "Range")
+                   (split #"=")
+                   second)
         [min max] (map read-string (split range #"-"))
         file-contents (read-partial-file (str public-dir (request :path)) min max)]
     (file-response file-contents request 206)))

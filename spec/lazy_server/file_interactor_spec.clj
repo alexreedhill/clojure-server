@@ -57,12 +57,14 @@
       (should= false
         (file-exists? "public/foobar.txt")))
 
-    (it "recognizes file doesn't exists if path points to directory"
+    (it "recognizes file doesn't exist if path points to directory"
       (should= false
         (file-exists? "public/"))))
 
   (it "gets directory contents"
-    (write-to-file "public/test.txt" "test")
-    (should= '("test.txt") (directory-contents "public/"))
-    (delete-file "public/test.txt")))
+    (write-to-file "public/test1.txt" "test")
+    (write-to-file "public/test2.txt" "test")
+    (should= '("test1.txt" "test2.txt") (directory-contents "public/"))
+    (delete-file "public/test1.txt")
+    (delete-file "public/test2.txt")))
 

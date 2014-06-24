@@ -1,6 +1,5 @@
 (ns lazy-server.file-interactor
-  (:require [clojure.string :refer [trim split blank?]]
-            [clojure.java.io :refer [output-stream input-stream as-file]]))
+  (:require [clojure.java.io :refer [output-stream input-stream as-file]]))
 
 (defn read-file [path]
   (with-open [reader (input-stream path)]

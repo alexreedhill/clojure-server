@@ -1,6 +1,6 @@
 (ns lazy-server.request-reader
   (:require [lazy-server.request-parser :refer [parse]]
-            [clojure.java.io :refer [reader writer]]
+            [clojure.java.io :refer [reader]]
             [clojure.string :refer [blank?]]))
 
 (defn read-body [in content-length]
