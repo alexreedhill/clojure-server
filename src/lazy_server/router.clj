@@ -50,45 +50,34 @@
     (serve-partial-file request)
     (serve-entire-file request)))
 
-(defmacro generate-handler [path request-sym response-fn method]
-  `(fn [request#]
-     (if (request-matches? request# ~path ~method)
-       (~response-fn request#))))
+(defn fnlist-to-fn [fnlist]
+  (apply some-fn fnlist))
 
-(defmacro GET [path response request-sym]
-  `(let [response-fn# (fn [~request-sym] (build ~request-sym ~response))]
-     (generate-handler ~path ~request-sym response-fn# "GET")))
+(defn GET [response]
+  (build response))
 
-(defmacro POST [path response request-sym]
-  `(let [response-fn# (fn [~request-sym] (build ~request-sym ~response))]
-     (generate-handler ~path ~request-sym response-fn# "POST")))
+(defn POST [response]
+  (build response))
 
-(defmacro PUT [path response request-sym]
-  `(let [response-fn# (fn [~request-sym] (build ~request-sym ~response))]
-     (generate-handler ~path ~request-sym response-fn# "PUT")))
+(defn PUT [response]
+  (build response))
+
+(defn options-response [response]
+    (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
+
+(defn OPTIONS [response]
+  (build (options-response response)))
 
 (defn if-match-header-matches? [request file-contents]
   (= (sha1 file-contents) ((request :headers) "If-Match")))
 
-(defmacro gen-patch-response-fn [request-sym response]
-  `(fn [~request-sym]
-     (let [file-contents# (read-file (str public-dir (~request-sym :path)))]
-       (if (if-match-header-matches? ~request-sym file-contents#)
-         (do
-           (~response :body)
-           (build ~request-sym {:code 204 :headers {"Etag" (sha1 (~request-sym :body))}}))
-         (build ~request-sym {:code 412 :headers {"Etag" (sha1 file-contents#)}})))))
-
-(defmacro PATCH [path response request-sym]
-  `(let [response-fn# (gen-patch-response-fn ~request-sym ~response)]
-     (generate-handler ~path ~request-sym response-fn# "PATCH")))
-
-(defn options-response [response]
-  (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
-
-(defmacro OPTIONS [path response request-sym]
-  `(let [response-fn# (fn [~request-sym] (build ~request-sym (options-response ~response)))]
-     (generate-handler ~path ~request-sym response-fn# "OPTIONS")))
+(defn PATCH [request response]
+  (let [file-contents (read-file (str public-dir (request :path)))]
+    (if (if-match-header-matches? request file-contents)
+      (do
+        (:body response)
+        (build {:code 204 :headers {"Etag" (sha1 (request :body))}}))
+      (build {:code 412 :headers {"Etag" (sha1 file-contents)}}))))
 
 (defn method-not-allowed-response [allowed]
   {:code 405 :headers {"Allow" (join "," allowed)}})
@@ -101,38 +90,69 @@
     (conj allowed "GET")
     :else allowed))
 
-(defmacro get-allowed-methods [request request-sym routes]
-  `(loop [routes# '~routes
-          allowed#     []]
-     (if (= (count routes#) 0)
-         (sort allowed#)
-         (recur (rest routes#) (add-method-if-allowed allowed# routes# ~request)))))
+(defn get-allowed-methods [request routes]
+  (loop [routes routes
+         allowed     []]
+     (if (= (count routes) 0)
+         (sort allowed)
+         (recur (rest routes) (add-method-if-allowed allowed routes request)))))
 
-(defmacro client-error [request request-sym routes]
-  `(let [allowed# (get-allowed-methods ~request ~request-sym ~routes)]
-     (if (> (count allowed#) 0)
-       (build ~request (method-not-allowed-response allowed#))
-       (build ~request {:code 404 :body (last (last '~routes))}))))
+(defn client-error [request routes]
+  (let [allowed (get-allowed-methods request routes)
+        response-body (or (last (last routes)) "Sorry, there's nothing here!")]
+     (if (> (count allowed) 0)
+       (build (method-not-allowed-response allowed))
+       (build {:code 404 :body response-body}))))
 
-(defmacro not-found [request request-sym routes]
-  `(let [file-path# (str public-dir (~request :path))]
-     (if (and (file-exists? file-path#) (= (~request :method) "GET"))
-       ((GET (~request :path) (serve-file ~request) ~request-sym) ~request)
-       (client-error ~request ~request-sym ~routes))))
+(defn not-found [request routes]
+  (let [file-path (str public-dir (request :path))]
+     (if (and (file-exists? file-path) (= (request :method) "GET"))
+       (GET (serve-file request))
+       (client-error request routes))))
 
-(defn not-found? [routes]
-  (or (= (count routes) 0)
-    (and (= (count routes) 1) (= (first (last routes)) 'not-found))))
+(defn resolve-method-fn [request]
+  (resolve (symbol (request :method))))
 
-(defn local-eval [body]
-  (binding [*ns* (find-ns 'lazy-server.router)]
-    (eval body)))
+(defn resolve-response [response request]
+  (if (= (type response) clojure.lang.PersistentList)
+    ((resolve (first response)) request)
+    response))
+
+(defmacro route-functionizer [request-sym & forms]
+  `(fn [~request-sym]
+     (let [method-fn# (resolve-method-fn ~request-sym)
+           response# (resolve-response '~(last forms) ~request-sym)]
+       (if (= (str (first '~forms)) "PATCH")
+         (method-fn# ~request-sym response#)
+         (method-fn# response#)))))
+
+(defmacro route-validator [route-form request-sym]
+  `(fn [request#]
+     (let [route-method# (str '~(first route-form))
+           route-path# '~(second route-form)
+           route-fn#    (route-functionizer ~request-sym
+                                           ~@route-form)]
+       (if (request-matches? request# route-path# route-method#)
+         (route-fn# request#)))))
+
+(defmacro routes-to-fns
+  ([request-sym route]
+   `[(route-validator ~route ~request-sym)])
+  ([request-sym route & more-routes]
+   `(concat
+      [(route-validator ~route ~request-sym)]
+      (routes-to-fns ~request-sym ~@more-routes))))
+
+(defmacro routes-to-router-fn [request-sym & routes]
+  `(fn [request#]
+     (let [success-fn#
+           (fnlist-to-fn
+             (routes-to-fns ~request-sym ~@routes))]
+       (or
+         (success-fn# request#)
+         (not-found request# '~routes)))))
 
 (defmacro defrouter [router-name request-sym & routes]
   `(defn ~router-name [request#]
-     (loop [routes# '~routes]
-       (if (not-found? routes#)
-         (not-found request# ~request-sym ~routes)
-         (if-let [response# ((local-eval (concat (first routes#) '(~request-sym))) request#)]
-           response#
-           (recur (rest routes#)))))))
+     (let [router-fn# (routes-to-router-fn ~request-sym ~@routes)]
+       (router-fn# request#))))

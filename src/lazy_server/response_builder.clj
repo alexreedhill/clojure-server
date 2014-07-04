@@ -34,7 +34,7 @@
     (catch IllegalArgumentException e (response :body))
     (catch NullPointerException e (byte-array 0))))
 
-(defn build [request response]
+(defn build [response]
   (let [status-line (build-status-line response)
         headers (build-headers response)
         body (build-body response)]
