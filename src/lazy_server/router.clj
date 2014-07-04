@@ -82,20 +82,11 @@
 (defn method-not-allowed-response [allowed]
   {:code 405 :headers {"Allow" (join "," allowed)}})
 
-(defn add-method-if-allowed [allowed routes request]
-  (cond
-    (path-matches? request (second (first routes)))
-    (conj allowed (str (first (first routes))))
-    (and (= (count routes) 1) (file-exists? (str public-dir (request :path))))
-    (conj allowed "GET")
-    :else allowed))
-
 (defn get-allowed-methods [request routes]
-  (loop [routes routes
-         allowed     []]
-     (if (= (count routes) 0)
-         (sort allowed)
-         (recur (rest routes) (add-method-if-allowed allowed routes request)))))
+  (->> routes
+       (filter #(= (request :path) (second %)))
+       (map #(first %))
+       (#(if (file-exists? (str public-dir (request :path))) (conj % "GET") %))))
 
 (defn client-error [request routes]
   (let [allowed (get-allowed-methods request routes)
