@@ -50,9 +50,6 @@
     (serve-partial-file request)
     (serve-entire-file request)))
 
-(defn fnlist-to-fn [fnlist]
-  (apply some-fn fnlist))
-
 (defn GET [response]
   (build response))
 
@@ -109,20 +106,19 @@
     ((resolve (first response)) request)
     response))
 
-(defmacro route-functionizer [request-sym & forms]
+(defmacro route-functionizer [request-sym & route]
   `(fn [~request-sym]
      (let [method-fn# (resolve-method-fn ~request-sym)
-           response# (resolve-response '~(last forms) ~request-sym)]
-       (if (= (str (first '~forms)) "PATCH")
+           response# (resolve-response '~(last route) ~request-sym)]
+       (if (= (str (first '~route)) "PATCH")
          (method-fn# ~request-sym response#)
          (method-fn# response#)))))
 
-(defmacro route-validator [route-form request-sym]
+(defmacro route-validator [route request-sym]
   `(fn [request#]
-     (let [route-method# (str '~(first route-form))
-           route-path# '~(second route-form)
-           route-fn#    (route-functionizer ~request-sym
-                                           ~@route-form)]
+     (let [route-method# (str '~(first route))
+           route-path# '~(second route)
+           route-fn#    (route-functionizer ~request-sym ~@route)]
        (if (request-matches? request# route-path# route-method#)
          (route-fn# request#)))))
 
@@ -136,9 +132,8 @@
 
 (defmacro routes-to-router-fn [request-sym & routes]
   `(fn [request#]
-     (let [success-fn#
-           (fnlist-to-fn
-             (routes-to-fns ~request-sym ~@routes))]
+     (let [fns# (routes-to-fns ~request-sym ~@routes)
+           success-fn# (apply some-fn fns#)]
        (or
          (success-fn# request#)
          (not-found request# '~routes)))))
