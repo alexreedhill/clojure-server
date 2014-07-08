@@ -1,13 +1,12 @@
 (ns lazy-server.router
-  (:require [lazy-server.response-builder :refer [build]]
+  (:require [lazy-server.server :refer [public-dir]]
+            [lazy-server.response-builder :refer [build]]
             [lazy-server.file-interactor :refer [file-exists? read-file write-to-file
                                                  read-partial-file]]
             [lazy-server.basic-authenticator :refer [authenticate]]
             [clojure.string :refer [join split]]
             [pantomime.mime :refer [mime-type-of]]
             [digest :refer [sha1]]))
-
-(def public-dir "public/")
 
 (defn path-matches? [request path]
   (= path (request :path)))

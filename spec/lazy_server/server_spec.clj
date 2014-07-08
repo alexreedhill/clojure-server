@@ -1,6 +1,6 @@
 (ns lazy-server.server-spec
   (:require [lazy-server.server :refer :all]
-            [lazy-server.router :refer [defrouter GET public-dir]]
+            [lazy-server.router :refer [defrouter GET]]
             [clojure.java.io :refer [reader writer delete-file]]
             [speclj.core :refer :all])
   (:import (java.net Socket ConnectException)))
