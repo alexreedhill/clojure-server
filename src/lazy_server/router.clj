@@ -50,29 +50,36 @@
     (serve-partial-file request)
     (serve-entire-file request)))
 
-(defn GET [response]
-  (build response))
+(defn resolve-response [request handler]
+  (if (= (type handler) clojure.lang.PersistentList)
+    (let [handler-ns (get :ns (meta (resolve (first handler))) 'lazy-server.router)
+          handler (replace {'request request} handler)]
+      (apply (ns-resolve handler-ns (first handler)) (rest handler)))
+    handler))
 
-(defn POST [response]
-  (build response))
+(defn GET [request handler]
+  (build (resolve-response request handler)))
 
-(defn PUT [response]
-  (build response))
+(defn POST [request handler]
+  (build (resolve-response request handler)))
+
+(defn PUT [request handler]
+  (build (resolve-response request handler)))
 
 (defn options-response [response]
-    (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
+  (assoc response :headers {"Allow" "GET,HEAD,POST,OPTIONS,PUT"}))
 
-(defn OPTIONS [response]
-  (build (options-response response)))
+(defn OPTIONS [request handler]
+  (build (options-response (resolve-response request handler))))
 
 (defn if-match-header-matches? [request file-contents]
   (= (sha1 file-contents) ((request :headers) "If-Match")))
 
-(defn PATCH [request response]
+(defn PATCH [request handler]
   (let [file-contents (read-file (str public-dir (request :path)))]
     (if (if-match-header-matches? request file-contents)
       (do
-        (:body response)
+        (:body (resolve-response request handler))
         (build {:code 204 :headers {"Etag" (sha1 (request :body))}}))
       (build {:code 412 :headers {"Etag" (sha1 file-contents)}}))))
 
@@ -95,26 +102,17 @@
 (defn not-found [request routes]
   (let [file-path (str public-dir (request :path))]
      (if (and (file-exists? file-path) (= (request :method) "GET"))
-       (GET (serve-file request))
+       (GET request (serve-file request))
        (client-error request routes))))
 
 (defn resolve-method-fn [request]
   (ns-resolve 'lazy-server.router (symbol (request :method))))
 
-(defn resolve-response [response request]
-  (if (= (type response) clojure.lang.PersistentList)
-    (let [response-ns (get :ns (meta (resolve (first response))) 'lazy-server.router)
-          response (replace {'request request} response)]
-      (apply (ns-resolve response-ns (first response)) (rest response)))
-    response))
-
 (defmacro route-functionizer [request & route]
   `(fn [request#]
      (let [method-fn# (resolve-method-fn request#)
-           response# (resolve-response '~(last route) request#)]
-       (if (= (str (first '~route)) "PATCH")
-         (method-fn# request# response#)
-         (method-fn# response#)))))
+           handler# '~(last route)]
+       (method-fn# request# handler#))))
 
 (defmacro route-validator [route request-sym]
   `(fn [request#]
