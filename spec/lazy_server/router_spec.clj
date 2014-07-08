@@ -15,8 +15,8 @@
          :body (str (request :path) " response body")})
 
       (defrouter get-router request
-        (GET "/" (get-response request))
-        (GET "/resource" (get-response request))
+        (GET "/" (lazy-server.router-spec/get-response request))
+        (GET "/resource" (lazy-server.router-spec/get-response request))
         (not-found "Sorry, there's nothing here!")))
 
     (it "routes root request"
@@ -163,6 +163,17 @@
     (it "routes to not-found if no path or method matches request"
       (should= "HTTP/1.1 404 Not Found\r\n\nSorry, there's nothing here!"
         (bytes-to-string (not-found-router {:method "GET" :path "/foobar"})))))
+
+  (context "response functions"
+    (before-all
+      (defrouter response-fn-router request
+        (GET "/" (redirect "http://foobar.com"))
+        (GET "/logs" (authenticate request "Authentication Required" "foobar" "admin:hunter2"))))
+
+    (it "redirects"
+      (should=
+        "HTTP/1.1 301 Moved Permanently\r\nLocation: http://foobar.com\r\n\n"
+        (bytes-to-string (response-fn-router {:method "GET" :path "/"})))))
 
   (context "matching"
     (context "path"

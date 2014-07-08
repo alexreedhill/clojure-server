@@ -99,26 +99,28 @@
        (client-error request routes))))
 
 (defn resolve-method-fn [request]
-  (resolve (symbol (request :method))))
+  (ns-resolve 'lazy-server.router (symbol (request :method))))
 
 (defn resolve-response [response request]
   (if (= (type response) clojure.lang.PersistentList)
-    ((resolve (first response)) request)
+    (let [response-ns (get :ns (meta (resolve (first response))) 'lazy-server.router)
+          response (replace {'request request} response)]
+      (apply (ns-resolve response-ns (first response)) (rest response)))
     response))
 
-(defmacro route-functionizer [request-sym & route]
-  `(fn [~request-sym]
-     (let [method-fn# (resolve-method-fn ~request-sym)
-           response# (resolve-response '~(last route) ~request-sym)]
+(defmacro route-functionizer [request & route]
+  `(fn [request#]
+     (let [method-fn# (resolve-method-fn request#)
+           response# (resolve-response '~(last route) request#)]
        (if (= (str (first '~route)) "PATCH")
-         (method-fn# ~request-sym response#)
+         (method-fn# request# response#)
          (method-fn# response#)))))
 
 (defmacro route-validator [route request-sym]
   `(fn [request#]
      (let [route-method# (str '~(first route))
            route-path# '~(second route)
-           route-fn#    (route-functionizer ~request-sym ~@route)]
+           route-fn#    (route-functionizer request# ~@route)]
        (if (request-matches? request# route-path# route-method#)
          (route-fn# request#)))))
 
