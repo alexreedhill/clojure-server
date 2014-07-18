@@ -34,8 +34,8 @@
 
 (defn serve-partial-file [request]
   (let [range (-> ((request :headers) "Range")
-                   (split #"=")
-                   second)
+                  (split #"=")
+                  second)
         [min max] (map read-string (split range #"-"))
         file-contents (read-partial-file (str public-dir (request :path)) min max)]
     (file-response file-contents request 206)))

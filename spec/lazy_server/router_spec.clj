@@ -55,9 +55,13 @@
   (context "options"
     (before-all
       (defrouter options-router request
+        (GET "/method_options" {:code 200})
+        (HEAD "/method_options" {:code 200})
+        (POST "/method_options" {:code 200})
+        (PUT "/method_options" {:code 200})
         (OPTIONS "/method_options" {:code 200})))
 
-    (it "routes options request"
+    (it "routes options request and adds allowed methods to allow header"
       (should= "HTTP/1.1 200 OK\r\nAllow: GET,HEAD,POST,OPTIONS,PUT\r\n\n"
         (bytes-to-string (options-router {:method "OPTIONS" :path "/method_options"})))))
 

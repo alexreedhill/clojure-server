@@ -6,7 +6,7 @@
   (:import (java.net Socket ConnectException)))
 
 (defn connect-socket [port address]
-    (Socket. address port))
+  (Socket. address port))
 
 (defn request-response [request]
   (with-open [socket (connect-socket 6000 "localhost")
@@ -23,14 +23,11 @@
   (before-all
     (future (-main "6000" "localhost" test-router "public/")))
 
-  (after-all
-    (delete-file "public/log.txt"))
-
   (it "reads line from client input and responds"
-    (should=  "HTTP/1.1 200 OK" (request-response "GET / HTTP/1.1\r\n\n")))
+    (should= "HTTP/1.1 200 OK" (request-response "GET / HTTP/1.1\r\n\n")))
 
   (it "reads a multiline request and responds"
-    (should=  "HTTP/1.1 200 OK"
+    (should= "HTTP/1.1 200 OK"
       (request-response "GET / HTTP/1.1\r\nFoo: Bar\r\n\n")))
 
   (it "reads multiple requests and responds"
