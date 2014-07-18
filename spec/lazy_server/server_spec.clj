@@ -23,9 +23,6 @@
   (before-all
     (future (-main "6000" "localhost" test-router "public/")))
 
-  (after-all
-    (delete-file "public/log.txt"))
-
   (it "reads line from client input and responds"
     (should=  "HTTP/1.1 200 OK" (request-response "GET / HTTP/1.1\r\n\n")))
 
