@@ -5,7 +5,7 @@
 
 (defn read-body [in content-length]
   (let [body (char-array content-length)]
-    (.read in body 0 content-length)
+    (.read ^java.io.BufferedReader in body 0 content-length)
     (apply str body)))
 
 (defn get-content-length [headers]
@@ -15,7 +15,7 @@
   (loop [request []]
     (if (and (blank? (last request)) (> (count request) 1))
       request
-      (recur (conj request (.readLine in))))))
+      (recur (conj request (.readLine ^java.io.BufferedReader in))))))
 
 (defn read-request [client-socket]
   (let [in (reader client-socket)

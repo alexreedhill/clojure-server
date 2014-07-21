@@ -12,30 +12,27 @@
 (defn open-server-socket [port address]
   (ServerSocket. (read-string port) 0 (InetAddress/getByName address)))
 
-(defn write-response [request router client-socket]
+(defn write-response [request router ^Socket client-socket]
   (with-open [out (java.io.DataOutputStream.
                     (java.io.BufferedOutputStream.
                       (.getOutputStream client-socket)))]
-    (let [response (.getBytes "HTTP/1.1 200 OK\r\n\n")]
+    (let [response (router request)]
       (try
         (catch IllegalArgumentException e))
-      (.write out response 0 (count response)))))
+      (.write ^DataOutputStream out response 0 (count response)))))
 
-(def keep-going (atom true))
-
-(defn handle-request [request pool client-socket args]
-  (println "pool: " pool)
-  (.execute pool
-            #(write-response request (nth args 2) client-socket)))
+(defn handle-request [pool client-socket args]
+  (.execute ^java.util.concurrent.ExecutorService pool
+            #(let [request (read-request client-socket)]
+               (log-request request (str public-dir "log.txt"))
+               (write-response request (nth args 2) client-socket))))
 
 (defn -main [& args]
-  (def pool (Executors/newFixedThreadPool 8))
-  (def public-dir (nth args 3))
-  (let [server-socket (open-server-socket (first args) (second args))]
+  (let [server-socket (open-server-socket (first args) (second args))
+        pool (Executors/newFixedThreadPool 8)]
     (println "Lazy server listening...")
-    (while (not (.isClosed server-socket))
+    (while (not (.isClosed ^ServerSocket server-socket))
        (try
-         (let [client-socket (.accept server-socket)
-               request (read-request client-socket)]
-           (handle-request request pool client-socket args))
+         (let [client-socket (.accept ^ServerSocket server-socket)]
+           (handle-request pool client-socket args))
          (catch Exception e (println "Exception: " e))))))
