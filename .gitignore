@@ -17,3 +17,4 @@ rerun.txt
 tags
 tmp/**/*
 !tmp/cache/.keep
+public/log.txt
