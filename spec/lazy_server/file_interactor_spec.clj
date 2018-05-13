@@ -62,9 +62,5 @@
         (file-exists? "public/"))))
 
   (it "gets directory contents"
-    (write-to-file "public/test1.txt" "test")
-    (write-to-file "public/test2.txt" "test")
-    (should= '("test1.txt" "test2.txt") (directory-contents "public/"))
-    (delete-file "public/test1.txt")
-    (delete-file "public/test2.txt")))
+    (should= '("test-file.txt" ".gitkeep") (directory-contents "resources/"))))
 
